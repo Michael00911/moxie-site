@@ -1,0 +1,9 @@
+﻿period,rank_in_trending,repo_name,repo_url,description,language,stars_total,forks_total,stars_daily,crawled_at
+daily,5,mattpocock/skills,https://github.com/mattpocock/skills,Skills for Real Engineers. Straight from my .claude directory.,Shell,77178,6656,3867,2026-05-13 07:48:10
+daily,10,yikart/AiToEarn,https://github.com/yikart/AiToEarn,Let's use AI to Earn!,TypeScript,12245,2119,1282,2026-05-13 07:48:10
+daily,2,rohitg00/agentmemory,https://github.com/rohitg00/agentmemory,#1 Persistent memory for AI coding agents based on real-world benchmarks,TypeScript,6345,580,1048,2026-05-13 07:48:10
+daily,1,tinyhumansai/openhuman,https://github.com/tinyhumansai/openhuman,"Your Personal AI super intelligence. Private, Simple and extremely powerful.",Rust,3302,308,1014,2026-05-13 07:48:10
+daily,7,millionco/react-doctor,https://github.com/millionco/react-doctor,Your agent writes bad React. This catches it,TypeScript,8942,282,788,2026-05-13 07:48:10
+daily,8,rasbt/LLMs-from-scratch,https://github.com/rasbt/LLMs-from-scratch,"Implement a ChatGPT-like LLM in PyTorch from scratch, step by step",Jupyter Notebook,94055,14434,772,2026-05-13 07:48:10
+daily,9,datawhalechina/hello-agents,https://github.com/datawhalechina/hello-agents,📚 《从零开始构建智能体》——从零开始的智能体原理与实践教程,Python,48655,5844,599,2026-05-13 07:48:10
+daily,11,HKUDS/AI-Trader,https://github.com/HKUDS/AI-Trader,"""AI-Trader: 100% Fully-Automated Agent-Native Trading""",Python,16843,2627,229,2026-05-13 07:48:10
