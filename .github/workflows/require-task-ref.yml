@@ -1,0 +1,29 @@
+name: require-task-ref
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+    branches: [main]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check-task-ref:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 校验 task:#N 引用
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -e
+          REGEX='([Tt]ask[:[:space:]]*#|[Cc]loses[[:space:]]*#|任务[[:space:]]*#)[0-9]+'
+          if echo "$PR_TITLE $PR_BODY" | grep -E "$REGEX" > /dev/null; then
+            MATCH=$(echo "$PR_TITLE $PR_BODY" | grep -oE "$REGEX" | head -1)
+            echo "✓ 找到 task 引用: $MATCH"
+            exit 0
+          fi
+          echo "::error::PR 描述或标题缺少 task:#N 引用"
+          echo "任务编号在 https://rd.sdtads.com 上查"
+          exit 1
