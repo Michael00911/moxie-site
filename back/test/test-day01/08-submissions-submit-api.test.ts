@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const insertMock = vi.fn();
 
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock('@/lib/supabase-server', () => ({
   createServerClient: () => ({
     schema: () => ({
       from: () => ({
@@ -22,7 +22,9 @@ vi.mock('@/lib/supabase/server', () => ({
     }),
   }),
   toolsTable: () => ({}),
-  submissionsTable: () => ({}),
+  submissionsTable: () => ({
+    insert: (...args: unknown[]) => Promise.resolve(insertMock(...args)),
+  }),
 }));
 
 vi.mock('next/server', () => ({

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx serve *)",
+      "Bash(curl -s -I http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/ -o /tmp/index.html)",
+      "Read(//tmp/**)",
+      "Bash(node scripts/audit-static.mjs)",
+      "Bash(curl -s http://localhost:3000/ -o ./tmp-index.html)",
+      "Bash(curl -s http://localhost:3000/__shutdown)",
+      "Bash(pkill -f \"serve out\")"
+    ]
+  }
+}

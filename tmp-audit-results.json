@@ -1,0 +1,1011 @@
+{
+  "results": [
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/categories",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/compare",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/launches",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/free",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/submit",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/fellou",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/claude-code",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/11labs-music",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%91%BD%E4%BB%A4%E8%A1%8C",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=AI%E7%BC%96%E7%A8%8B",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Anthropic",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/manus",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/qwen",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/lovable",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E8%A7%86%E9%A2%91%E7%94%9F%E6%88%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/dreamina",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%AD%97%E8%8A%82",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%9B%BE%E5%83%8F",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E7%BC%96%E8%BE%91%E5%99%A8",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/tldraw",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/elevenlabs",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=UI%E7%94%9F%E6%88%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%A3%B0%E9%9F%B3%E5%85%8B%E9%9A%86",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=React",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Vercel",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/cursor",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E7%94%B5%E5%BD%B1%E6%84%9F",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/v0",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/runway",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E8%89%BA%E6%9C%AF%E9%A3%8E%E6%A0%BC",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=AI%E6%90%9C%E7%B4%A2",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/midjourney",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E8%B0%83%E7%A0%94",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E8%87%AA%E5%8A%A8%E5%8C%96",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%B7%A5%E4%BD%9C%E6%B5%81",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/perplexity",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%BC%80%E6%BA%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=AI%E5%8A%A9%E6%89%8B",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E7%AC%94%E8%AE%B0",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E6%95%B0%E5%AD%97%E4%BA%BA",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/n8n",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/notion-ai",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E8%A7%86%E9%A2%91",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%85%A8%E6%A0%88%E7%94%9F%E6%88%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E6%97%A0%E4%BB%A3%E7%A0%81",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/heygen",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/chinese-ai",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/open-source-ai",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/ai-for-developers",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/free-ai-tools",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/ai-for-creators",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/ai-with-affiliate",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/ai-tools-china-access",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/list/ai-startups-monetizing",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/compare/claude-vs-chatgpt",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/compare/claude-code-vs-cursor",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/compare/deepseek-vs-claude",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/compare/dreamina-vs-runway",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives/chatgpt",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives/notion-ai",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives/midjourney",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives/cursor",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives/claude",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/content-creator",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/indie-dev",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/research-power",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/oversea-cheap",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea#ai-tool-affiliate",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea#ai-newsletter",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea#ai-tool-china-clone",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea#ai-developer-freelance",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea#tiktok-ai-faceless",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/oversea#ai-saas-china-agent",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries/ecom",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries/saas",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/alternatives/heygen",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries/content-creator",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries/restaurant",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries/education",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/industries/service",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by/operations",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by/design",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by/growth",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by/customer",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by/monetization",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/by/dev",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/find",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/free/ai-name-generator",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/free/token-calculator",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/free/ai-cost-tracker",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/claude-code-vs-cursor-2026",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/free/llm-pricing-compare",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/ai-tool-stack-content-creator",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/dreamina-vs-runway",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/deepseek-vs-claude-cost",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/ai-video-stack-2026",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/manus-vs-fellou",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/free/ai-description-generator",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/deepseek",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/47",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/46",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/44",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/45",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/feed",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools/kimi",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/vibe-coding-saas-guide",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/marketplace",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=writing",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=video",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/services",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=image",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=coding",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=marketing",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=audio",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=agent",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=research",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?category=productivity",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%9B%BD%E4%BA%A7",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=AI%20Agent",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E5%87%BA%E6%B5%B7",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=TikTok",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Newsletter",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Vibe%20Coding",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E9%AB%98%E6%80%A7%E4%BB%B7%E6%AF%94",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=PPT%20%E7%94%9F%E6%88%90",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=%E7%BE%8E%E5%8C%BA",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Affiliate",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=B",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=A",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=C",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=D",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=E",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=F",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=G",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=H",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=I",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=J",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=K",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=L",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=M",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=N",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=O",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=P",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Q",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=R",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=S",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=T",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=U",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=V",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=W",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=X",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Z",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=Y",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/tools?q=#",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/about",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/learn",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/marketplace/ai-resume-saas",
+      "status": 200
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/cases",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/main-app-1eaaa2a81a768727.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/8500-3953cc33eeceb44e.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/9771-e0c80fa4ad8679ae.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/app/page-78ad6668bef52f2d.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/8437-e6bfe2e311ab70ff.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/4bd1b696-c2f6e0877b6c10aa.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/app/layout-6f727e259e6fa66a.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/webpack-a3694949da582d0c.js",
+      "status": 200
+    },
+    {
+      "kind": "link",
+      "url": "http://localhost:3000/_next/static/chunks/webpack-a3694949da582d0c.js",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/3794-f26e50036f4bb807.js",
+      "status": 200
+    },
+    {
+      "kind": "link",
+      "url": "http://localhost:3000/icon.png?f4290c6e274bc25e",
+      "status": 200
+    },
+    {
+      "kind": "link",
+      "url": "http://localhost:3000/_next/static/css/24cd4aa9eb690f4e.css",
+      "status": 200
+    },
+    {
+      "kind": "script",
+      "url": "http://localhost:3000/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "status": 200
+    }
+  ],
+  "failures": [
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/content-creator",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/indie-dev",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/research-power",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/collections/oversea-cheap",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/claude-code-vs-cursor-2026",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/ai-tool-stack-content-creator",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/dreamina-vs-runway",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/deepseek-vs-claude-cost",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/ai-video-stack-2026",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/manus-vs-fellou",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/47",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/46",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/44",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/weekly/45",
+      "status": 404
+    },
+    {
+      "kind": "anchor",
+      "url": "http://localhost:3000/blog/vibe-coding-saas-guide",
+      "status": 404
+    }
+  ]
+}

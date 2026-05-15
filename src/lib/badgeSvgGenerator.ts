@@ -1,19 +1,16 @@
-import { NextResponse } from "next/server";
-import { getToolBySlug } from "@/lib/data";
-import { LEVEL_LABEL } from "@/lib/types";
-import { tools } from "@/lib/data";
+import { getToolBySlug } from "./data";
+import { LEVEL_LABEL } from "./types";
 
-export const dynamic = "force-static";
-
-export async function generateStaticParams() {
-  return tools.map(tool => ({ slug: tool.slug }));
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
-export async function GET(
-  _req: Request,
-  ctx: { params: Promise<{ slug: string }> }
-) {
-  const { slug } = await ctx.params;
+export function generateBadgeSvg(slug: string): string {
   const tool = getToolBySlug(slug);
 
   const name = tool?.name ?? slug;
@@ -51,19 +48,5 @@ export async function GET(
   <text x="${266 - 30}" y="62" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#ffffff">${escapeXml(level)}</text>
 </svg>`;
 
-  return new NextResponse(svg, {
-    headers: {
-      "Content-Type": "image/svg+xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-    },
-  });
-}
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+  return svg;
 }

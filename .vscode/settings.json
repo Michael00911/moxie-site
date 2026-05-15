@@ -1,5 +1,6 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "supabase": true
+        "supabase": true,
+        "ForEach-Object": true
     }
 }

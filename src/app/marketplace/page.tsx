@@ -13,22 +13,16 @@ export const metadata: Metadata = {
     "中文独立开发者项目交易市场。AI SaaS / Newsletter / 内容站 / 电商独立站挂牌出售，子墨撮合，月新增 12+ 项目。",
 };
 
+export const dynamic = "force-static";
+
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   active: { label: "在售", color: "bg-emerald-100 text-emerald-900 border-emerald-200" },
   negotiating: { label: "谈判中", color: "bg-amber-100 text-amber-900 border-amber-200" },
   sold: { label: "已售出", color: "bg-zinc-100 text-zinc-700 border-zinc-200" },
 };
 
-export default async function MarketplacePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string }>;
-}) {
-  const params = await searchParams;
-  const activeCategory = params.category;
-  const filtered = activeCategory
-    ? listings.filter((l) => l.category === activeCategory)
-    : listings;
+export default async function MarketplacePage() {
+  const filtered = listings;
   const featured = filtered.filter((l) => l.tier === "featured");
   const rest = filtered.filter((l) => l.tier !== "featured");
 
@@ -83,14 +77,14 @@ export default async function MarketplacePage({
           {/* Categories filter */}
           <section>
             <div className="flex flex-wrap gap-2 mb-6">
-              <FilterChip href="/marketplace" active={!activeCategory}>
+              <FilterChip href="/marketplace" active={true}>
                 全部分类
               </FilterChip>
               {marketplaceCategories.map((c) => (
                 <FilterChip
                   key={c.slug}
                   href={`/marketplace?category=${c.slug}`}
-                  active={activeCategory === c.slug}
+                  active={false}
                 >
                   {c.emoji} {c.name}
                 </FilterChip>

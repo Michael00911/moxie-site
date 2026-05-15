@@ -9,43 +9,12 @@ export const metadata: Metadata = {
   description: "Moxie收录的全部 AI 工具，按分类、等级、关键词筛选",
 };
 
+export const dynamic = "force-static";
+
 const LEVELS: ToolLevel[] = ["L1", "L2", "L3", "L4"];
 
-export default async function ToolsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; level?: string; q?: string }>;
-}) {
-  const params = await searchParams;
-  const activeCategory = params.category;
-  const activeLevel = params.level as ToolLevel | undefined;
-  const query = params.q?.toLowerCase().trim();
-
-  let filtered = tools;
-  if (activeCategory) filtered = filtered.filter((t) => t.category === activeCategory);
-  if (activeLevel) filtered = filtered.filter((t) => t.level === activeLevel);
-  if (query) {
-    filtered = filtered.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.nameEn?.toLowerCase().includes(query) ||
-        t.tagline.toLowerCase().includes(query) ||
-        t.tags.some((tag) => tag.toLowerCase().includes(query))
-    );
-  }
-
-  const buildHref = (overrides: Record<string, string | undefined>) => {
-    const next: Record<string, string> = {};
-    if (params.category) next.category = params.category;
-    if (params.level) next.level = params.level;
-    if (params.q) next.q = params.q;
-    for (const [k, v] of Object.entries(overrides)) {
-      if (v == null) delete next[k];
-      else next[k] = v;
-    }
-    const qs = new URLSearchParams(next).toString();
-    return qs ? `/tools?${qs}` : "/tools";
-  };
+export default async function ToolsPage() {
+  const filtered = tools;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -59,25 +28,25 @@ export default async function ToolsPage({
       {/* Filters */}
       <div className="flex flex-col gap-4 mb-8 pb-6 border-b border-border">
         <FilterRow label="分类">
-          <FilterChip href={buildHref({ category: undefined })} active={!activeCategory}>
+          <FilterChip href="/tools" active={true}>
             全部
           </FilterChip>
           {categories.map((cat) => (
             <FilterChip
               key={cat.slug}
-              href={buildHref({ category: cat.slug })}
-              active={activeCategory === cat.slug}
+              href={`/tools?category=${cat.slug}`}
+              active={false}
             >
               {cat.emoji} {cat.name}
             </FilterChip>
           ))}
         </FilterRow>
         <FilterRow label="等级">
-          <FilterChip href={buildHref({ level: undefined })} active={!activeLevel}>
+          <FilterChip href="/tools" active={true}>
             全部
           </FilterChip>
           {LEVELS.map((lvl) => (
-            <FilterChip key={lvl} href={buildHref({ level: lvl })} active={activeLevel === lvl}>
+            <FilterChip key={lvl} href={`/tools?level=${lvl}`} active={false}>
               {LEVEL_LABEL[lvl]}
             </FilterChip>
           ))}
