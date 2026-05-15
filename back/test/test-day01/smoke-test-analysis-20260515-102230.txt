@@ -1,0 +1,126 @@
+╔════════════════════════════════════════════════════════════╗
+║         💡 冒烟测试完成 - 详细分析与建议                    ║
+╚════════════════════════════════════════════════════════════╝
+
+🎯 总体评估
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+系统通过率: 2.86% (1/35 通过)
+关键功能: ✅ Supabase集成模块测试通过
+主要阻障: ❌ 缺失 2 个核心 API 路由模块
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 测试结果分布
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+测试文件统计:
+  1️⃣  Supabase 连接测试
+      • 01-supabase-connection.test.ts ............ ⏭️  SKIPPED
+      • 02-schema-validation.test.ts ............ ⏭️  SKIPPED
+      • 03-rls-policies.test.ts ................. ⏭️  SKIPPED
+      
+  2️⃣  Webhook & API 测试
+      • 05-revalidate-webhook.test.ts ........... ❌ FAILED
+      • 06-nextjs-data-fetch.test.ts ............ ⏭️  SKIPPED
+      • 08-submissions-submit-api.test.ts ....... ❌ FAILED
+      
+  3️⃣  业务功能测试
+      • 07-submissions-rls.test.ts .............. ⏭️  SKIPPED
+      • 09-supabase-tools.test.ts ............... ✅ PASSED ✨
+      
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 关键问题详情
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+【问题 1】Revalidate Webhook API 缺失
+  文件: 05-revalidate-webhook.test.ts
+  错误: Cannot find package '@/app/api/revalidate/route'
+  
+  需要创建: src/app/api/revalidate/route.ts
+  职责: 处理 Supabase 数据变化的 ISR 重新验证
+  
+  示例实现:
+  ────────────────────────────────────────
+  export async function POST(req: Request) {
+    // 验证 Supabase webhook 签名
+    // 触发相关页面的 revalidatePath()
+    return Response.json({ success: true })
+  }
+  ────────────────────────────────────────
+
+【问题 2】Submissions API 缺失
+  文件: 08-submissions-submit-api.test.ts
+  错误: Cannot find package '@/app/api/submissions/route'
+  
+  需要创建: src/app/api/submissions/route.ts
+  职责: 处理工具提交表单的后端验证和存储
+  
+  核心功能:
+    • POST 方法: 验证并存储提交数据
+    • 数据校验: 
+      - tool_name (必填, 非空)
+      - website_url (必填, 有效URL)
+      - tagline (必填, ≤50字)
+      - contact_email (必填, 有效邮箱)
+      - category_slugs (必填, 数组, 去重)
+    • 错误处理:
+      - 400: 请求体不是有效JSON
+      - 422: 数据验证失败
+      - 500: 服务器错误
+
+【问题 3】Supabase 测试凭据
+  状态: ✅ 已配置 (但测试中 hasSupabaseCreds 返回 false)
+  
+  原因: 测试运行时未正确加载 .env.local
+  解决: 需要在测试执行前确保环境变量已加载
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 已通过测试
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ 09-supabase-tools.test.ts: can properly import and call toolsTable
+   
+   验证内容:
+   • 成功导入 toolsTable 函数
+   • 函数签名正确
+   • Supabase 客户端集成正常
+   
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 建议的修复优先级
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+【P0 - 立即修复】
+  1. 创建 src/app/api/revalidate/route.ts
+     • 影响: ISR 功能不可用
+     • 预计: 1-2小时
+     
+  2. 创建 src/app/api/submissions/route.ts
+     • 影响: 用户无法提交工具
+     • 预计: 2-3小时
+
+【P1 - 后续修复】
+  3. 修复 Supabase 测试环境配置
+     • 在 vitest setup 中加载 .env.local
+     • 影响: 4 个集成测试无法运行
+     • 预计: 30分钟
+
+【P2 - 优化完善】
+  4. 添加更多边界情况测试
+  5. 完善错误处理和日志
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 测试文件位置
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+原始输出: back/test/test-day01/smoke-test-20260515-095610.txt
+报告摘要: back/test/test-day01/smoke-test-report-20260515-095610.txt
+此文件: back/test/test-day01/smoke-test-analysis-20260515-102230.txt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 生成时间: 2026-05-15 10:22:30
