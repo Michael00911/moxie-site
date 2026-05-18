@@ -3,7 +3,7 @@
 **任务编号：** T2
 **关联需求：** v2.0-edgeone-noauth.md §4.1 T2
 **编写日期：** 2026-05-18
-**状态：** 部分通过（TC-C ✅ TC-G ✅ TC-E ✅ TC-L ✅ | TC-P 待 EdgeOne 控制台操作）
+**状态：** 部分通过（TC-C ✅ TC-G ✅ TC-E ✅ TC-H ✅ TC-L ✅ 53/53 | TC-P 待 EdgeOne 控制台操作）
 **注：** 自定义域名 + HTTPS（需求第四点）不在本方案验收范围内。
 
 ---
@@ -355,6 +355,61 @@ Step 6: TC-P2       — curl 验证公网 URL
 
 18/18 路由返回 200，0 失败。
 
+### TC-C — ✅ 全部通过
+
+```
+命令：npx tsx scripts/test-t2-functional.ts（TC-C 部分）
+```
+
+| 用例 | 结果 | 实测值 |
+|------|------|--------|
+| TC-C1: output = "export" | ✅ | `output: "export"` |
+| TC-C2: images.unoptimized = true | ✅ | `unoptimized: true` |
+| TC-C3: trailingSlash = true | ✅ | `trailingSlash: true` |
+
+### TC-G — ✅ 全部通过（14 项）
+
+| 用例 | 结果 |
+|------|------|
+| TC-G1: 12 个动态路由全部有 generateStaticParams | ✅ 12/12 |
+| TC-G2: tools/[slug] 参数来自 tools.map(slug) | ✅ |
+| TC-G3: out/tools/ 含 23 个工具详情页 | ✅ |
+
+### TC-E — ✅ 全部通过（25 项）
+
+| 用例 | 结果 | 实测值 |
+|------|------|--------|
+| TC-E1: out/ 存在 | ✅ | — |
+| TC-E2: HTML ≥ 100 | ✅ | 138 个 |
+| TC-E3: 19 个抽查路由全部存在 | ✅ | 19/19 |
+| TC-E4: JS ≥ 10，CSS ≥ 1 | ✅ | JS: 21，CSS: 1 |
+| TC-E5: 404.html 存在 | ✅ | — |
+
+### TC-H — ✅ 全部通过（10 项）
+
+| 用例 | 结果 | 关键验证点 |
+|------|------|-----------|
+| TC-H1: 首页含工具名 | ✅ | "Claude Code" 等出现在首页 HTML |
+| TC-H2: lang=zh-CN | ✅ | `<html lang="zh-CN">` |
+| TC-H3: CSS 引用 | ✅ | `/_next/static/...css` |
+| TC-H4~H6: tools/claude-code 完整 | ✅ | 含工具名 + tagline + "子墨亲测" |
+| TC-H7: compare 含两个工具名 | ✅ | Claude Code + Cursor 同时出现 |
+| TC-H8: industries/saas 体积正常 | ✅ | 49KB |
+| TC-H9: 工具列表页含 slug 链接 | ✅ | |
+| TC-H10: 404 页面有内容 | ✅ | 23KB |
+
+### TC-L — ✅ 全部通过（2 项）
+
+```
+服务端口：随机（47000~48000 范围，避免冲突）
+测试路由数：136 个
+```
+
+| 用例 | 结果 | 说明 |
+|------|------|------|
+| TC-L1: 136 个路由全部返回 200 | ✅ | 覆盖全部动态路由类型 |
+| TC-L2: CSS 资源可加载 | ✅ | `0~qnq2x604axi.css` → 200 |
+
 ### TC-P — 🔲 待手工执行
 
 | 用例 | 结果 | 说明 |
@@ -364,9 +419,9 @@ Step 6: TC-P2       — curl 验证公网 URL
 
 ### 当前整体结论
 
-- **可自动验证用例（TC-C / TC-G / TC-E / TC-L）：全部通过**
+- **可自动化用例：53 项全部通过（TC-C 3 + TC-G 14 + TC-E 25 + TC-H 10 + TC-L 2）**
 - **待人工完成：** TC-P1 / TC-P2（EdgeOne 控制台建项目 + 公网验证）
 - **注意事项：**
   - EdgeOne 构建命令应填 `npm run build`，不是 `pnpm build`
-  - 构建时需在 EdgeOne 控制台配置 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY` 两个环境变量
+  - 构建时须在 EdgeOne 控制台配置 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - 输出目录填 `out`（无斜杠）
