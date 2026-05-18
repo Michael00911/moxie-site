@@ -1,4 +1,4 @@
-import type { Category, Tool } from "./types";
+import type { Category, Tool, ToolLevel } from "./types";
 import { categories as _categories } from "./types";
 
 // ─────────────────────────────────────────────
@@ -35,6 +35,17 @@ type SupabaseToolRow = {
 };
 
 // ─────────────────────────────────────────────
+// 枚举字段校验（防止 DB 写入非法值后静默通过类型断言）
+// ─────────────────────────────────────────────
+function isToolLevel(v: string | null): v is ToolLevel {
+  return v === "L1" || v === "L2" || v === "L3" || v === "L4";
+}
+
+function isPricing(v: string | null): v is Tool["pricing"] {
+  return v === "free" || v === "freemium" || v === "paid";
+}
+
+// ─────────────────────────────────────────────
 // snake_case → camelCase 映射
 // ─────────────────────────────────────────────
 function rowToTool(row: SupabaseToolRow): Tool {
@@ -44,11 +55,11 @@ function rowToTool(row: SupabaseToolRow): Tool {
     nameEn:        row.name_en        ?? undefined,
     tagline:       row.tagline,
     description:   row.description    ?? "",
-    level:         (row.level as Tool["level"]) ?? "L4",
+    level:         isToolLevel(row.level)   ? row.level   : "L4",
     rating:        row.rating         ?? undefined,
     category:      row.category,
     tags:          row.tags           ?? [],
-    pricing:       (row.pricing as Tool["pricing"]) ?? "free",
+    pricing:       isPricing(row.pricing)   ? row.pricing : "free",
     priceNote:     row.price_note     ?? undefined,
     zimoView:      row.zimo_view      ?? undefined,
     goodFor:       row.good_for       ?? undefined,

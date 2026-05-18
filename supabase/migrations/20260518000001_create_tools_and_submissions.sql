@@ -1,14 +1,9 @@
 -- =============================================================
 -- Migration: 20260518000001_create_tools_and_submissions
 -- 执行位置: Supabase 控制台 → SQL Editor → New query → 粘贴全文 → Run
+-- 幂等性：全部语句均可重复执行，不会丢失已有数据。
+-- 开发环境重置（危险，会清空数据）请使用 scripts/reset-db.sql。
 -- =============================================================
-
-
--- -------------------------------------------------------------
--- 0. 清理旧表（先删有外键的子表，再删父表）
--- -------------------------------------------------------------
-drop table if exists public.submissions cascade;
-drop table if exists public.tools      cascade;
 
 
 -- -------------------------------------------------------------
@@ -92,6 +87,7 @@ begin
 end;
 $$;
 
+drop trigger if exists tools_set_updated_at on public.tools;
 create trigger tools_set_updated_at
   before update on public.tools
   for each row
@@ -111,6 +107,7 @@ alter table public.submissions enable row level security;
 --    anon / authenticated：只能 SELECT status = 'approved' 的行
 --    service_role：绕过 RLS，拥有全部权限（Supabase 默认行为）
 -- -------------------------------------------------------------
+drop policy if exists "public_read_approved_tools" on public.tools;
 create policy "public_read_approved_tools"
   on public.tools
   for select
@@ -127,6 +124,7 @@ create policy "public_read_approved_tools"
 -- -------------------------------------------------------------
 
 -- anon 可以插入提交记录，但不能读取
+drop policy if exists "anon_insert_submissions" on public.submissions;
 create policy "anon_insert_submissions"
   on public.submissions
   for insert
