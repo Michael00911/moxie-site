@@ -1,24 +1,23 @@
 /**
  * 一次性 seed 脚本：将 src/lib/data.ts 的 24 条工具数据写入 Supabase tools 表。
- * 策略：UPSERT（on conflict slug → update），幂等、可重复执行，不会因外键而破坏 submissions 数据。
+ * 策略：UPSERT（on conflict slug → update），幂等、可重复执行，不会破坏 submissions 外键。
  *
  * 运行：
+ *   npm run seed:tools
  *   npx tsx scripts/seed-tools.ts
  */
 
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { tools } from "../src/lib/data";
 
 // ---------- 读取 .env.local ----------
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const envPath = resolve(__dirname, "../.env.local");
-
 function loadEnv(path: string): Record<string, string> {
   const env: Record<string, string> = {};
   try {
-    const lines = readFileSync(path, "utf-8").split("\n");
+    // .env.local 可能是 UTF-16LE 编码，null 字节需在解析前剥除
+    const lines = readFileSync(path, "utf-8").replace(/\0/g, "").split("\n");
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) continue;
@@ -35,7 +34,7 @@ function loadEnv(path: string): Record<string, string> {
   return env;
 }
 
-const env = loadEnv(envPath);
+const env = loadEnv(resolve(process.cwd(), ".env.local"));
 
 const SUPABASE_URL = env["NEXT_PUBLIC_SUPABASE_URL"];
 const SERVICE_KEY  = env["SUPABASE_SERVICE_ROLE_KEY"];
@@ -52,10 +51,6 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false },
 });
-
-// ---------- 原始数据（直接从 data.ts 复制，保持 camelCase） ----------
-// 使用动态 import 读取编译后的模块
-const { tools } = await import("../src/lib/data.js");
 
 // ---------- camelCase → snake_case 转换 ----------
 type ToolRow = {
@@ -111,39 +106,40 @@ function toRow(t: (typeof tools)[number]): ToolRow {
     logo_url:      t.logoUrl      ?? null,
     cover_url:     t.coverUrl     ?? null,
     published_at:  t.publishedAt  ?? null,
-    // 保留原始 updatedAt；若没有则用当前时间
-    updated_at:    t.updatedAt ?? new Date().toISOString(),
+    updated_at:    t.updatedAt    ?? new Date().toISOString(),
     is_sponsored:  t.isSponsored  ?? false,
     saves:         t.saves        ?? 0,
     views:         t.views        ?? 0,
-    // 所有 data.ts 的已策展数据均视为 approved + curation
     status:        "approved",
     source:        "curation",
   };
 }
 
-// ---------- 执行 UPSERT ----------
-const rows = tools.map(toRow);
+// ---------- 主逻辑（包在 async 函数里，兼容 CJS/ESM） ----------
+async function main() {
+  const rows = tools.map(toRow);
+  console.log(`[seed] 准备写入 ${rows.length} 条工具数据…`);
 
-console.log(`[seed] 准备写入 ${rows.length} 条工具数据…`);
+  const { data, error } = await supabase
+    .from("tools")
+    .upsert(rows, {
+      onConflict: "slug",
+      ignoreDuplicates: false,
+    })
+    .select("slug");
 
-const { data, error } = await supabase
-  .from("tools")
-  .upsert(rows, {
-    onConflict: "slug",       // slug 冲突时 UPDATE 而非报错
-    ignoreDuplicates: false,  // 确保已有记录也会被更新
-  })
-  .select("slug");
+  if (error) {
+    console.error("[seed] ❌ 写入失败：", error.message);
+    console.error("       详情：", error);
+    process.exit(1);
+  }
 
-if (error) {
-  console.error("[seed] ❌ 写入失败：", error.message);
-  console.error("       详情：", error);
-  process.exit(1);
+  console.log(`[seed] ✅ 成功写入 ${data?.length ?? 0} 条`);
+  if (data && data.length !== rows.length) {
+    console.warn(
+      `[seed] ⚠️  期望写入 ${rows.length} 条，实际返回 ${data.length} 条，请检查 Supabase 日志`
+    );
+  }
 }
 
-console.log(`[seed] ✅ 成功写入 ${data?.length ?? 0} 条`);
-if (data && data.length !== rows.length) {
-  console.warn(
-    `[seed] ⚠️  期望写入 ${rows.length} 条，实际返回 ${data.length} 条，请检查 Supabase 日志`
-  );
-}
+main();

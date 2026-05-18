@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ui } from "@/lib/i18n";
 
 export function SearchHero() {
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [exIdx] = useState(() => Math.floor(Math.random() * ui.search.examples.length));
+  const [exIdx, setExIdx] = useState(0);
+  useEffect(() => {
+    setExIdx(Math.floor(Math.random() * ui.search.examples.length));
+  }, []);
   const example = ui.search.examples[exIdx];
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();

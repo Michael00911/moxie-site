@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
-import { getToolBySlug } from "@/lib/data";
+import { getToolBySlug, tools } from "@/lib/data";
 import { LEVEL_LABEL } from "@/lib/types";
+
+export async function generateStaticParams() {
+  return tools.map((t) => ({ slug: t.slug }));
+}
 
 export async function GET(
   _req: Request,

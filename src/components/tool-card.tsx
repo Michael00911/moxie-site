@@ -4,7 +4,7 @@ import {
   LEVEL_LABEL,
   type Tool,
 } from "@/lib/types";
-import { categories } from "@/lib/data";
+import { categories } from "@/lib/types";
 
 const PRICING_LABEL: Record<Tool["pricing"], string> = {
   free: "免费",

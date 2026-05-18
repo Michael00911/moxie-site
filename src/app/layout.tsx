@@ -158,7 +158,7 @@ function SiteFooter() {
       </div>
       <div className="border-t border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 text-xs text-muted flex justify-between">
-          <span>© {new Date().getFullYear()} {ui.brand.name}</span>
+          <span>© 2026 {ui.brand.name}</span>
           <span>{ui.footer.updateNote}</span>
         </div>
       </div>

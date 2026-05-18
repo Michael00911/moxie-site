@@ -30,12 +30,12 @@ export default async function BadgePreviewPage({
 
   const baseUrl = "https://moxie.ai"; // 部署后替换为真实域名
   const embedCode = `<a href="${baseUrl}/tools/${slug}?ref=embed" target="_blank">
-  <img src="${baseUrl}/badge/${slug}"
+  <img src="${baseUrl}/badge/img/${slug}"
        alt="${t.name} - Featured on Moxie"
        width="280" height="80" />
 </a>`;
 
-  const markdownCode = `[![${t.name} - Featured on Moxie](${baseUrl}/badge/${slug})](${baseUrl}/tools/${slug}?ref=embed)`;
+  const markdownCode = `[![${t.name} - Featured on Moxie](${baseUrl}/badge/img/${slug})](${baseUrl}/tools/${slug}?ref=embed)`;
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
@@ -63,7 +63,7 @@ export default async function BadgePreviewPage({
         </div>
         <div className="rounded-lg bg-muted-bg/30 p-6 flex items-center justify-center">
           <img
-            src={`/badge/${slug}`}
+            src={`/badge/img/${slug}`}
             alt={`${t.name} featured badge`}
             width={280}
             height={80}
@@ -101,7 +101,7 @@ export default async function BadgePreviewPage({
           <span className="text-xs text-muted">需要直接 URL 时</span>
         </div>
         <pre className="rounded-lg bg-zinc-900 text-zinc-100 p-4 text-xs overflow-x-auto font-mono leading-relaxed">
-          {baseUrl}/badge/{slug}
+          {baseUrl}/badge/img/{slug}
         </pre>
       </section>
 

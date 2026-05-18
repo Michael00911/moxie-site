@@ -21,6 +21,18 @@ export type Category = {
   description: string;
 };
 
+export const categories: Category[] = [
+  { slug: "writing",      name: "写作助手",  emoji: "✍️",  description: "写文案、写文章、写脚本" },
+  { slug: "video",        name: "视频制作",  emoji: "🎬",  description: "AI 生成视频、剪辑、配音" },
+  { slug: "image",        name: "图像生成",  emoji: "🎨",  description: "文生图、图生图、修图" },
+  { slug: "coding",       name: "编程开发",  emoji: "💻",  description: "AI 写代码、调试、文档" },
+  { slug: "marketing",    name: "营销增长",  emoji: "📈",  description: "广告、SEO、私域、社媒" },
+  { slug: "audio",        name: "音频语音",  emoji: "🎙️", description: "TTS、语音克隆、音乐生成" },
+  { slug: "agent",        name: "AI Agent", emoji: "🤖",  description: "自动化助手、工作流、Copilot" },
+  { slug: "research",     name: "研究分析",  emoji: "🔍",  description: "搜索、调研、数据分析" },
+  { slug: "productivity", name: "效率工具",  emoji: "⚡",  description: "笔记、日程、协作、自动化" },
+];
+
 export type Tool = {
   slug: string;
   name: string;
