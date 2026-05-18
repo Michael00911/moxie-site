@@ -87,10 +87,8 @@ async function fetchToolsFromSupabase(): Promise<Tool[]> {
   const anonKey    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !anonKey) {
-    throw new Error(
-      "[data] 缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY，" +
-      "请检查 .env.local"
-    );
+    console.warn("[data] 缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY，工具列表将为空");
+    return [];
   }
 
   const url =
@@ -109,9 +107,8 @@ async function fetchToolsFromSupabase(): Promise<Tool[]> {
   });
 
   if (!res.ok) {
-    throw new Error(
-      `[data] Supabase fetch 失败：${res.status} ${res.statusText}`
-    );
+    console.error(`[data] Supabase fetch 失败：${res.status} ${res.statusText}`);
+    return [];
   }
 
   const rows: SupabaseToolRow[] = await res.json();
