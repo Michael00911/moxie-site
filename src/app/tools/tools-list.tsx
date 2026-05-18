@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { categories } from "@/lib/types";
-import type { Tool } from "@/lib/types";
+import { categories, LEVEL_LABEL, type Tool, type ToolLevel } from "@/lib/types";
 import { ToolCard } from "@/components/tool-card";
-import { LEVEL_LABEL, type ToolLevel } from "@/lib/types";
 
 const LEVELS: ToolLevel[] = ["L1", "L2", "L3", "L4"];
 
