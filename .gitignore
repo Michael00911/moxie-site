@@ -12,8 +12,9 @@
 
 # testing
 /coverage
-/dist-scripts
-
+/back/*
+/out.*
+/dist-*
 
 # next.js
 /.next/
@@ -45,3 +46,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.claude/settings.local.json
