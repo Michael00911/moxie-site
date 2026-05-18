@@ -38,7 +38,7 @@ export default function BadgeIndexPage() {
           {featured.slice(0, 6).map((t) => (
             <Link
               key={t.slug}
-              href={`/badge/${t.slug}/preview`}
+              href={`/badge/preview/${t.slug}`}
               className="rounded-lg border border-border p-3 bg-muted-bg/40 hover:shadow-md transition-all"
             >
               <img

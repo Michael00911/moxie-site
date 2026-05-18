@@ -15,6 +15,7 @@
 /back/*
 /out.*
 /dist-*
+/moxie-*
 
 # next.js
 /.next/
@@ -25,6 +26,8 @@
 # production
 /build
 /*.zip
+/package-lock.json
+/tmp-*
 
 # misc
 .DS_Store

@@ -8,7 +8,20 @@
       "Bash(node scripts/audit-static.mjs)",
       "Bash(curl -s http://localhost:3000/ -o ./tmp-index.html)",
       "Bash(curl -s http://localhost:3000/__shutdown)",
-      "Bash(pkill -f \"serve out\")"
+      "Bash(pkill -f \"serve out\")",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(gh pr *)",
+      "Bash(where gh.exe)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" --version)",
+      "Read(//c/Users/EDY/AppData/Local/Programs/**)",
+      "Bash(ls /c/Program*/GitHub*/bin/gh.exe)",
+      "Bash(powershell -NoProfile -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(mkdir -p src/app/badge/preview)",
+      "Bash(git mv *)",
+      "Bash(npm run *)",
+      "Bash(git status *)"
     ]
   }
 }
