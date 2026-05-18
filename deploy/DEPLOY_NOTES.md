@@ -13,7 +13,12 @@
 
 ### 0.1 验证构建产物
 
+> 必须先执行 `npm run build:static` 才会产出 `out/`。普通的 `npm run build` 只产出 `.next/`（供 Vercel 使用），**不会**生成 `out/`。
+
 ```bash
+# 触发静态导出构建（设置 STATIC_EXPORT=true 后跑 next build）
+npm run build:static
+
 # 目录存在且非空
 ls out/ | head -5 && du -sh out/
 
@@ -185,7 +190,7 @@ Compress-Archive -Path out\* -DestinationPath out.zip
 
 ## 附录 B：本次部署使用的本地工具
 
-- **构建**：`next build`（已配置 `output: 'export'`）
+- **构建**：`npm run build:static`（设置 `STATIC_EXPORT=true`，启用 `next.config.ts` 中的 `output: 'export'`）
 - **本地预览**：`npx serve out -p 3000`
 - **审计脚本**：[scripts/audit-static.mjs](scripts/audit-static.mjs)
   - 抓取首页 HTML
@@ -198,6 +203,9 @@ Compress-Archive -Path out\* -DestinationPath out.zip
 ## 附录 C：一键打包命令参考
 
 ```bash
+# 0. 触发静态导出构建（必须）
+npm run build:static
+
 # 1. 清理旧包
 rm -f out.zip
 

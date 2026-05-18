@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-type-check",
+    "build": "next build",
+    "build:static": "node scripts/build-static.mjs",
     "start": "next start",
     "prebuild": "npx tsc --project tsconfig.script.json && node dist-scripts/scripts/generate-badges.js"
   },

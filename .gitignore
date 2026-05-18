@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/dist-scripts
+
 
 # next.js
 /.next/
@@ -21,6 +23,7 @@
 
 # production
 /build
+/*.zip
 
 # misc
 .DS_Store
