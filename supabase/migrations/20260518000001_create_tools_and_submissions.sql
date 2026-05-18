@@ -32,6 +32,7 @@ create table if not exists public.tools (
   logo_url      text,
   cover_url     text,
   published_at  date,
+  created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
   saves         int         not null default 0,
   views         int         not null default 0,
@@ -46,6 +47,7 @@ comment on table  public.tools                is '主理人策展工具库';
 comment on column public.tools.slug           is '唯一标识符，同时作为 URL slug';
 comment on column public.tools.level          is 'L1=子墨亲测 L2=子墨试过 L3=子墨精选 L4=待测试';
 comment on column public.tools.zimo_view      is '主理人主观评价，展示在详情页';
+comment on column public.tools.created_at     is '行插入时间，仅由 DB 写入，用于审计和排序';
 comment on column public.tools.status         is 'approved=上线 draft=草稿 archived=下架';
 comment on column public.tools.source         is 'curation=主理人录入 submission=UGC审核通过 crawler=爬虫审核通过';
 

@@ -26,6 +26,7 @@ type SupabaseToolRow = {
   logo_url: string | null;
   cover_url: string | null;
   published_at: string | null;
+  created_at: string;
   updated_at: string;
   is_sponsored: boolean;
   saves: number;
