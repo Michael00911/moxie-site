@@ -19,3 +19,7 @@ export function createServerClient() {
 export function toolsTable() {
   return createServerClient().from('tools');
 }
+
+export function submissionsTable() {
+  return createServerClient().from('submissions');
+}

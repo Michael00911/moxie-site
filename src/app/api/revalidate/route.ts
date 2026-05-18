@@ -17,10 +17,7 @@ export async function POST(request: Request) {
 
     // 处理 tools 表的变更
     if (body.schema === 'tools' && body.table === 'tools') {
-      // 重新验证 tools 标签
-      // revalidateTag('tools');
-      revalidateTag('tools', { revalidatePage: true });
-
+      revalidateTag('tools');
 
       // 重新验证工具列表页面
       revalidatePath('/tools');
@@ -44,8 +41,7 @@ export async function POST(request: Request) {
 
     // 处理 submissions 表的变更
     if (body.schema === 'submissions' && body.table === 'submissions') {
-      // revalidateTag('submissions');
-       revalidateTag('submissions', { revalidatePage: true });
+      revalidateTag('submissions');
     }
 
     return NextResponse.json({ success: true });
