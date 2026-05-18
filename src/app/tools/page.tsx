@@ -18,7 +18,7 @@ export default function ToolsPage() {
         </p>
       </header>
       <Suspense fallback={<div className="text-muted text-sm py-10 text-center">加载中…</div>}>
-        <ToolsList />
+        <ToolsList tools={tools} />
       </Suspense>
     </div>
   );

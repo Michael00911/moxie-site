@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { categories, tools } from "@/lib/data";
+import { categories } from "@/lib/types";
+import type { Tool } from "@/lib/types";
 import { ToolCard } from "@/components/tool-card";
 import { LEVEL_LABEL, type ToolLevel } from "@/lib/types";
 
 const LEVELS: ToolLevel[] = ["L1", "L2", "L3", "L4"];
 
-export function ToolsList() {
+export function ToolsList({ tools }: { tools: Tool[] }) {
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category") ?? undefined;
   const activeLevel    = (searchParams.get("level") ?? undefined) as ToolLevel | undefined;
