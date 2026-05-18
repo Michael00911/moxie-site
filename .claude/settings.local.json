@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"e:/WorkSpace/moxie/AI-moxie-26M5W3/moxie-site/supabase/migrations\")"
+    ],
+    "additionalDirectories": [
+      "e:\\WorkSpace\\moxie\\AI-moxie-26M5W3\\moxie-site\\supabase"
+    ]
+  }
+}
