@@ -42,7 +42,7 @@ export default function BadgeIndexPage() {
               className="rounded-lg border border-border p-3 bg-muted-bg/40 hover:shadow-md transition-all"
             >
               <img
-                src={`/badge/${t.slug}`}
+                src={`/badge/img/${t.slug}`}
                 alt={`${t.name} featured badge`}
                 width={280}
                 height={80}
@@ -66,7 +66,7 @@ export default function BadgeIndexPage() {
         <h2 className="text-lg font-bold mb-4">嵌入代码（复制到你的网站）</h2>
         <pre className="rounded-lg bg-zinc-900 text-zinc-100 p-4 text-xs overflow-x-auto font-mono leading-relaxed">
 {`<a href="https://moxie.ai/tools/{你的工具 slug}?ref=embed" target="_blank">
-  <img src="https://moxie.ai/badge/{你的工具 slug}"
+  <img src="https://moxie.ai/badge/img/{你的工具 slug}"
        alt="Featured on Moxie"
        width="280" height="80" />
 </a>`}

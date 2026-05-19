@@ -1,0 +1,35 @@
+name: Deploy to EdgeOne Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Deploy to EdgeOne Pages
+        uses: TencentEdgeOne/pages-action@v1
+        with:
+          apiToken: ${{ secrets.EDGEONE_API_TOKEN }}
+          projectName: ${{ secrets.EDGEONE_PROJECT_NAME }}
+          directory: out
+          branch: main
+          commitMessage: ${{ github.event.head_commit.message }}
