@@ -27,6 +27,12 @@ INSERT INTO public.deploy_throttle (id, last_triggered_at)
 VALUES (1, now())
 ON CONFLICT (id) DO NOTHING;
 
+ALTER TABLE public.deploy_throttle ENABLE ROW LEVEL SECURITY;
+
+-- 无任何开放策略 = anon / authenticated 无法读写；
+-- SECURITY DEFINER 触发器函数以 owner 身份绕过 RLS，仍可正常更新该表。
+REVOKE ALL ON public.deploy_throttle FROM anon, authenticated;
+
 
 -- -------------------------------------------------------------
 -- 3. 配置表（替代 ALTER DATABASE SET app.*）
