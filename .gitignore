@@ -13,6 +13,9 @@
 # testing
 /coverage
 /docs/test-result/*
+!/docs/test-result/T1-*.md
+!/docs/test-result/T2-*.md
+!/docs/test-result/T3-*.md
 /docs/test-results/*
 /docs/test-plan/*
 !/docs/test-plan/T1-*.md
