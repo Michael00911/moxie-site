@@ -25,11 +25,12 @@
 
 ### 2.1 Supabase 环境
 - 已执行迁移文件 `supabase/migrations/20260519000002_edgeone_auto_deploy.sql`
-- 已在 Supabase SQL Editor 执行运行时配置：
+- 已在 Supabase SQL Editor 写入运行时配置（**不要提交到 git**）：
   ```sql
-  ALTER DATABASE postgres SET app.supabase_url   = 'https://<PROJECT_REF>.supabase.co';
-  ALTER DATABASE postgres SET app.trigger_secret = '<随机密钥>';
-  SELECT pg_reload_conf();
+  INSERT INTO public.deploy_config (key, value) VALUES
+      ('supabase_url',   'https://<PROJECT_REF>.supabase.co'),
+      ('trigger_secret', '<随机密钥>')
+  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
   ```
 - `pg_net` 扩展已启用
 
@@ -37,7 +38,7 @@
 - `supabase/functions/trigger-deploy/index.ts` 已部署到 Supabase 项目
 - Edge Function 环境变量已设置：
   ```
-  TRIGGER_SECRET          = <与数据库 app.trigger_secret 一致>
+  TRIGGER_SECRET          = <与 deploy_config 表中 trigger_secret 值一致>
   SUPABASE_URL            = https://<PROJECT_REF>.supabase.co
   SUPABASE_SERVICE_ROLE_KEY = eyJ...
   EDGEONE_DEPLOY_HOOK_URL = https://edgeone.xxx.com/deploy-hook/...
@@ -294,20 +295,26 @@ INSERT INTO public.submissions (payload, source) VALUES
 
 ### TC-ERR1：数据库配置缺失时触发器静默跳过（不阻塞写入）
 
-> 模拟 `app.supabase_url` 或 `app.trigger_secret` 未配置的情况
+> 模拟 `deploy_config` 中 `supabase_url` 或 `trigger_secret` 未配置的情况
 
 ```sql
--- 临时在当前会话清除配置（仅影响当前连接）
-SET app.supabase_url   TO DEFAULT;
-SET app.trigger_secret TO DEFAULT;
+-- 步骤 1：备份当前配置值
+CREATE TEMP TABLE _cfg_backup AS
+SELECT key, value FROM public.deploy_config WHERE key IN ('supabase_url', 'trigger_secret');
 
--- 插入记录，期望触发器不报错、写入成功
+-- 步骤 2：删除配置，模拟缺失
+DELETE FROM public.deploy_config WHERE key IN ('supabase_url', 'trigger_secret');
+
+-- 步骤 3：插入记录，期望触发器不报错、写入成功
 INSERT INTO public.submissions (payload, source)
 VALUES ('{"test": "missing config"}'::jsonb, 'anonymous_form');
 
--- 恢复（或重新连接即可）
-RESET app.supabase_url;
-RESET app.trigger_secret;
+-- 步骤 4：恢复配置
+INSERT INTO public.deploy_config (key, value)
+SELECT key, value FROM _cfg_backup
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+DROP TABLE _cfg_backup;
 ```
 
 **验收标准：** INSERT 成功，无任何 PostgreSQL 错误，说明触发器在配置缺失时静默返回 NULL。
@@ -338,7 +345,7 @@ curl -s -w "\nHTTP %{http_code}" \
 ```
 执行顺序：
   Step 1: 在 Supabase SQL Editor 执行迁移文件（若未执行）
-  Step 2: 配置数据库级 app.supabase_url 和 app.trigger_secret
+  Step 2: 在 SQL Editor 向 deploy_config 写入 supabase_url 和 trigger_secret（见 §2.1）
   Step 3: 部署 Edge Function trigger-deploy
   Step 4: TC-DB1 ~ DB4（数据库结构验证）
   Step 5: TC-SEC1 ~ SEC2（安全性）
