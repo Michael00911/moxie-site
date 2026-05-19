@@ -68,11 +68,19 @@ Deno.serve(async (req: Request) => {
     const deployHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
     if (apiToken) deployHeaders['Authorization'] = `Bearer ${apiToken}`
 
-    const deployRes = await fetch(deployHookUrl, {
-      method: 'POST',
-      headers: deployHeaders,
-      body: JSON.stringify({}),
-    })
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), 10_000)
+    let deployRes: Response
+    try {
+      deployRes = await fetch(deployHookUrl, {
+        method: 'POST',
+        headers: deployHeaders,
+        body: JSON.stringify({}),
+        signal: ac.signal,
+      })
+    } finally {
+      clearTimeout(timer)
+    }
 
     if (!deployRes.ok) {
       const errText = await deployRes.text()
@@ -98,9 +106,8 @@ function respond(body: unknown, status: number): Response {
 // 固定时间字符串比较，防止短路求值导致的时序侧信道
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    // 长度不等时仍走完比较循环，避免立即返回泄露长度信息
     let diff = 0
-    for (let i = 0; i < b.length; i++) diff |= (a.charCodeAt(i % a.length) ^ b.charCodeAt(i))
+    for (let i = 0; i < b.length; i++) diff |= (a.charCodeAt(i % (a.length || 1)) ^ b.charCodeAt(i))
     return false
   }
   let diff = 0
