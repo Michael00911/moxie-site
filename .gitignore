@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/docs/test-result/*
 /docs/test-results/*
 /docs/test-plan/*
 /docs/test-system/*
