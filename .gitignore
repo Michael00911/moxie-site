@@ -12,9 +12,9 @@
 
 # testing
 /coverage
-/doc/test-results/*
-/doc/test-plan/*
-/doc/test-system/*
+/docs/test-results/*
+/docs/test-plan/*
+/docs/test-system/*
 
 # next.js
 /.next/
@@ -23,6 +23,7 @@
 # production
 /build
 .claude/*
+.claude/settings.local.json
 
 # misc
 .DS_Store
@@ -37,6 +38,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 .env.local
+.env.vercel.local
 
 # vercel
 .vercel
