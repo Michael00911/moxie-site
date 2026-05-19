@@ -1,6 +1,6 @@
 -- =============================================================
 -- Migration: 20260519000002_edgeone_auto_deploy
--- 功能：submissions 表变更后，通过 Edge Function 自动触发
+-- 功能：tools / submissions 表变更后，通过 Edge Function 自动触发
 --       EdgeOne 重新部署（带 60s 节流控制）
 -- 幂等性：全部语句可重复执行，不会破坏已有数据。
 -- 注意：不使用 ALTER DATABASE（Supabase 托管环境无 superuser），
@@ -106,11 +106,20 @@ $$;
 
 -- -------------------------------------------------------------
 -- 6. 绑定触发器（FOR EACH STATEMENT：批量操作只发一次通知）
+--    tools 和 submissions 均监听，二者共享同一触发器函数与节流表。
 -- -------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_edgeone_deploy ON public.submissions;
 
 CREATE TRIGGER trg_edgeone_deploy
     AFTER INSERT OR UPDATE OR DELETE
     ON public.submissions
+    FOR EACH STATEMENT
+    EXECUTE FUNCTION public.fn_notify_edgeone_deploy();
+
+DROP TRIGGER IF EXISTS trg_edgeone_deploy ON public.tools;
+
+CREATE TRIGGER trg_edgeone_deploy
+    AFTER INSERT OR UPDATE OR DELETE
+    ON public.tools
     FOR EACH STATEMENT
     EXECUTE FUNCTION public.fn_notify_edgeone_deploy();

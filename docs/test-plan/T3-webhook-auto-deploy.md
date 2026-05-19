@@ -56,10 +56,10 @@
 
 | ID | 分类 | 名称 | 优先级 | 执行方式 |
 |----|------|------|--------|---------|
-| TC-DB1 ~ DB4 | 数据库结构 | 节流表 / 触发器函数 / 触发器绑定 | P0 | Supabase SQL Editor |
+| TC-DB1 ~ DB5 | 数据库结构 | 节流表 / 触发器函数 / 触发器绑定（tools + submissions） | P0 | Supabase SQL Editor |
 | TC-SEC1 ~ SEC2 | 安全性 | Edge Function 鉴权 / SECURITY DEFINER | P0 | curl + SQL Editor |
 | TC-TH1 ~ TH3 | 节流逻辑 | 60s 冷却 / 冷却后恢复 | P0 | Supabase SQL Editor + Edge Function 日志 |
-| TC-E2E1 ~ E2E3 | 端到端 | INSERT/UPDATE/DELETE 触发链路 | P0 | SQL Editor + EdgeOne 控制台 |
+| TC-E2E1 ~ E2E4 | 端到端 | INSERT/UPDATE/DELETE 触发链路（tools + submissions） | P0 | SQL Editor + EdgeOne 控制台 |
 | TC-ERR1 ~ ERR2 | 异常容错 | 配置缺失 / 密钥错误 | P1 | curl + SQL Editor |
 
 ---
@@ -116,6 +116,22 @@ SELECT trigger_name, event_manipulation, action_timing, action_orientation
 FROM information_schema.triggers
 WHERE event_object_schema = 'public'
   AND event_object_table = 'submissions'
+  AND trigger_name = 'trg_edgeone_deploy';
+```
+
+**验收标准：** 返回 3 行（对应 INSERT / UPDATE / DELETE），每行：
+- `action_timing = 'AFTER'`
+- `action_orientation = 'STATEMENT'`（FOR EACH STATEMENT）
+
+---
+
+### TC-DB5：触发器已绑定到 `tools` 表
+
+```sql
+SELECT trigger_name, event_manipulation, action_timing, action_orientation
+FROM information_schema.triggers
+WHERE event_object_schema = 'public'
+  AND event_object_table = 'tools'
   AND trigger_name = 'trg_edgeone_deploy';
 ```
 
@@ -273,6 +289,35 @@ DELETE FROM public.submissions WHERE payload->>'trigger' = 'e2e test';
 
 ---
 
+### TC-E2E4：直接更新 `tools` 表也能触发部署链路
+
+> 验证 tools 触发器与 submissions 触发器共享同一函数和节流表，逻辑完全一致。
+
+**测试步骤：**
+
+1. 倒拨节流时间，保证冷却期已过：
+   ```sql
+   UPDATE public.deploy_throttle
+   SET last_triggered_at = now() - interval '2 minutes'
+   WHERE id = 1;
+   ```
+
+2. 更新任意一条已有 tools 记录（空操作，不改实际内容）：
+   ```sql
+   UPDATE public.tools SET name = name WHERE slug = 'claude-code';
+   ```
+
+**验收标准：**
+- UPDATE 成功，无报错
+- Edge Function 日志约 2~5 秒后出现：
+  ```
+  [trigger-deploy] Received: {"table":"tools","schema":"public","op":"UPDATE"}
+  [trigger-deploy] Deploy triggered successfully
+  ```
+- EdgeOne 控制台触发新一轮构建
+
+---
+
 ### TC-E2E3：一次批量操作只发出一条通知（STATEMENT 级触发器）
 
 ```sql
@@ -366,6 +411,7 @@ curl -s -w "\nHTTP %{http_code}" \
   [ ] TC-DB2: 节流表初始行 id=1 存在
   [ ] TC-DB3: 触发器函数存在，SECURITY DEFINER 配置
   [ ] TC-DB4: 触发器绑定到 submissions，AFTER INSERT/UPDATE/DELETE FOR EACH STATEMENT
+  [ ] TC-DB5: 触发器绑定到 tools，AFTER INSERT/UPDATE/DELETE FOR EACH STATEMENT
 
 安全性
   [ ] TC-SEC1: 无效密钥被 Edge Function 拒绝（401）
@@ -378,8 +424,9 @@ curl -s -w "\nHTTP %{http_code}" \
 
 端到端
   [ ] TC-E2E1: submissions INSERT → EdgeOne 构建 → 前台 5 分钟内更新
-  [ ] TC-E2E2: UPDATE 操作也被正确捕获
-  [ ] TC-E2E3: 批量 INSERT 只发出 1 条通知
+  [ ] TC-E2E2: submissions UPDATE 操作也被正确捕获
+  [ ] TC-E2E3: 批量 INSERT 只发出 1 条通知（STATEMENT 级触发器）
+  [ ] TC-E2E4: tools UPDATE → Edge Function 日志含 "table":"tools" → EdgeOne 触发构建
 
 异常容错
   [ ] TC-ERR1: 配置缺失时写入不报错（静默跳过）
