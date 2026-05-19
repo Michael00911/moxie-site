@@ -5,7 +5,7 @@
  */
 
 /// <reference types="node" />
-import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync, createReadStream } from "node:fs";
 import { resolve, join } from "node:path";
 import * as http from "node:http";
 
@@ -39,20 +39,6 @@ function countByExt(dir: string, ext: string): number {
     if (f.isDirectory()) {
       n += countByExt(join(dir, f.name), ext);
     } else if (f.name.endsWith(ext)) {
-      n++;
-    }
-  }
-  return n;
-}
-
-/** 递归统计目录下精确文件名数量 */
-function countNamed(dir: string, name: string): number {
-  if (!existsSync(dir)) return 0;
-  let n = 0;
-  for (const f of readdirSync(dir, { withFileTypes: true })) {
-    if (f.isDirectory()) {
-      n += countNamed(join(dir, f.name), name);
-    } else if (f.name === name) {
       n++;
     }
   }
@@ -231,7 +217,6 @@ async function runRouteTests() {
         : filePath.endsWith(".js") ? "application/javascript"
         : "text/html; charset=utf-8";
       res.writeHead(200, { "Content-Type": ext });
-      const { createReadStream } = require("node:fs");
       createReadStream(filePath).pipe(res);
     } else {
       res.writeHead(404);
