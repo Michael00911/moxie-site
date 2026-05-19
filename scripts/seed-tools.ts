@@ -10,19 +10,44 @@
  *       避免"从 Supabase 取数再写回 Supabase"的循环依赖。
  */
 
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { config } from "dotenv";
+import { parse as dotenvParse } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import type { Tool } from "../src/lib/types";
 
-// ---------- 读取 .env.local ----------
-// 注意：Windows PowerShell 有时以 UTF-16LE 保存文件，dotenv 遇到时会静默跳过所有变量。
-// 若出现"缺少环境变量"错误，请用 VS Code 将 .env.local 另存为 UTF-8（无 BOM）。
-const result = config({ path: resolve(process.cwd(), ".env.local") });
-if (result.error) {
-  console.error("[seed] 无法读取 .env.local，请确认文件存在：", result.error.message);
-  process.exit(1);
+// ---------- 读取 .env.local（兼容 UTF-8 / UTF-16LE / UTF-16BE） ----------
+function loadEnv(filePath: string): void {
+  let raw: Buffer;
+  try {
+    raw = readFileSync(filePath);
+  } catch {
+    console.error(`[seed] 无法读取 ${filePath}，请确认文件存在`);
+    process.exit(1);
+  }
+
+  let content: string;
+  if (raw[0] === 0xff && raw[1] === 0xfe) {
+    // UTF-16LE BOM（PowerShell Set-Content / Out-File 默认编码）
+    content = raw.slice(2).toString("utf16le");
+  } else if (raw[0] === 0xfe && raw[1] === 0xff) {
+    // UTF-16BE BOM
+    content = Buffer.from(raw.slice(2)).swap16().toString("utf16le");
+  } else {
+    // UTF-8（含或不含 BOM）
+    content = raw.toString("utf8").replace(/^﻿/, "");
+  }
+
+  // 去除 null 字节（某些编辑器写入时残留）
+  content = content.replace(/\0/g, "");
+
+  const parsed = dotenvParse(content);
+  for (const [k, v] of Object.entries(parsed)) {
+    if (!(k in process.env)) process.env[k] = v;
+  }
 }
+
+loadEnv(resolve(process.cwd(), ".env.local"));
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
