@@ -10,37 +10,22 @@
  *       避免"从 Supabase 取数再写回 Supabase"的循环依赖。
  */
 
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import type { Tool } from "../src/lib/types";
 
 // ---------- 读取 .env.local ----------
-function loadEnv(path: string): Record<string, string> {
-  const env: Record<string, string> = {};
-  try {
-    // .env.local 可能是 UTF-16LE 编码，null 字节需在解析前剥除
-    const lines = readFileSync(path, "utf-8").replace(/\0/g, "").split("\n");
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const idx = trimmed.indexOf("=");
-      if (idx === -1) continue;
-      const key = trimmed.slice(0, idx).trim();
-      const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
-      env[key] = val;
-    }
-  } catch {
-    console.error(`[seed] 无法读取 ${path}，请确认文件存在`);
-    process.exit(1);
-  }
-  return env;
+// 注意：Windows PowerShell 有时以 UTF-16LE 保存文件，dotenv 遇到时会静默跳过所有变量。
+// 若出现"缺少环境变量"错误，请用 VS Code 将 .env.local 另存为 UTF-8（无 BOM）。
+const result = config({ path: resolve(process.cwd(), ".env.local") });
+if (result.error) {
+  console.error("[seed] 无法读取 .env.local，请确认文件存在：", result.error.message);
+  process.exit(1);
 }
 
-const env = loadEnv(resolve(process.cwd(), ".env.local"));
-
-const SUPABASE_URL = env["NEXT_PUBLIC_SUPABASE_URL"];
-const SERVICE_KEY  = env["SUPABASE_SERVICE_ROLE_KEY"];
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error(

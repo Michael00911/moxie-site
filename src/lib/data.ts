@@ -87,7 +87,7 @@ async function fetchToolsFromSupabase(): Promise<Tool[]> {
   const anonKey    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !anonKey) {
-    throw new Error("[data] 缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY，请在 .env.local 或 Vercel 环境变量中配置");
+    throw new Error("[data] 缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY，请在 .env.local 或 EdgeOne Pages 环境变量中配置");
   }
 
   const url =
@@ -122,6 +122,9 @@ export const categories: Category[] = _categories;
 // 工具列表：构建时从 Supabase 拉取（top-level await，module: esnext 已支持）
 // ─────────────────────────────────────────────
 export const tools: Tool[] = await fetchToolsFromSupabase();
+if (tools.length === 0) {
+  throw new Error("[data] Supabase 返回 0 条工具，请确认数据已 seed 且 RLS 策略允许 anon SELECT status=approved");
+}
 
 // ─────────────────────────────────────────────
 // 工具查询辅助函数（与原有签名完全一致）
