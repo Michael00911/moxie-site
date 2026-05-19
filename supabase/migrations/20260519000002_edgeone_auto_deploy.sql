@@ -44,12 +44,17 @@ ALTER TABLE public.deploy_config ENABLE ROW LEVEL SECURITY;
 
 
 -- -------------------------------------------------------------
--- 4. 写入配置值（首次插入 / 后续更新均安全）
+-- 4. 写入配置值
+--    【重要】此步骤含敏感信息，不在迁移文件中硬编码。
+--    首次部署后，在 Supabase SQL Editor 单独执行以下语句
+--    （将占位符替换为真实值，不要提交到 git）：
+--
+--    INSERT INTO public.deploy_config (key, value) VALUES
+--        ('supabase_url',   'https://<PROJECT_REF>.supabase.co'),
+--        ('trigger_secret', '<与 Edge Function TRIGGER_SECRET secret 相同的值>')
+--    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+--
 -- -------------------------------------------------------------
-INSERT INTO public.deploy_config (key, value) VALUES
-    ('supabase_url',    'https://lkheprtvomhtitivtuyc.supabase.co'),
-    ('trigger_secret',  '5e63574c8d5be003941ec97740da501ef0bdfc1d5ddab4f1bbad451a77ff22cf')
-ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 
 -- -------------------------------------------------------------

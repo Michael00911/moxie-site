@@ -1,44 +1,41 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type, x-trigger-secret',
-}
+// 此函数仅供数据库触发器内部调用，不需要开放给浏览器跨域访问。
+// 统一用 json() 辅助函数返回响应，不附加 CORS 头。
 
 Deno.serve(async (req: Request) => {
-  // CORS 预检
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS_HEADERS })
+  // 拒绝非 POST 请求（OPTIONS 预检同样无意义，直接返回 405）
+  if (req.method !== 'POST') {
+    return respond({ error: 'Method Not Allowed' }, 405)
   }
 
   try {
-    // ── 1. 验证触发器密钥 ──────────────────────────────────────
+    // ── 1. 验证触发器密钥（timing-safe 比较防止时序攻击）────────
     const incomingSecret = req.headers.get('x-trigger-secret') ?? ''
     const expectedSecret = Deno.env.get('TRIGGER_SECRET') ?? ''
 
-    if (!expectedSecret || incomingSecret !== expectedSecret) {
+    if (!expectedSecret || !timingSafeEqual(incomingSecret, expectedSecret)) {
       console.error('[trigger-deploy] Unauthorized: invalid X-Trigger-Secret')
-      return json({ error: 'Unauthorized' }, 401)
+      return respond({ error: 'Unauthorized' }, 401)
     }
 
     const body = await req.json().catch(() => ({}))
     console.log('[trigger-deploy] Received:', JSON.stringify(body))
 
     // ── 2. 初始化 Supabase 客户端（service role 绕过 RLS）────────
-    const supabaseUrl         = Deno.env.get('SUPABASE_URL') ?? ''
-    const serviceRoleKey      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    const deployHookUrl = Deno.env.get('EDGEONE_DEPLOY_HOOK_URL') ?? ''
-    const apiToken      = Deno.env.get('EDGEONE_API_TOKEN') ?? ''  // 可选：token 内嵌于 URL 时留空
+    const supabaseUrl    = Deno.env.get('SUPABASE_URL') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const deployHookUrl  = Deno.env.get('EDGEONE_DEPLOY_HOOK_URL') ?? ''
+    const apiToken       = Deno.env.get('EDGEONE_API_TOKEN') ?? ''  // 可选：token 内嵌于 URL 时留空
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error('[trigger-deploy] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-      return json({ error: 'Server misconfiguration' }, 500)
+      return respond({ error: 'Server misconfiguration' }, 500)
     }
 
     if (!deployHookUrl) {
       console.error('[trigger-deploy] Missing EDGEONE_DEPLOY_HOOK_URL')
-      return json({ error: 'Server misconfiguration: EDGEONE_DEPLOY_HOOK_URL missing' }, 500)
+      return respond({ error: 'Server misconfiguration: EDGEONE_DEPLOY_HOOK_URL missing' }, 500)
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
@@ -57,12 +54,12 @@ Deno.serve(async (req: Request) => {
 
     if (throttleError) {
       console.error('[trigger-deploy] Throttle update failed:', throttleError)
-      return json({ error: 'Throttle check failed', detail: throttleError.message }, 500)
+      return respond({ error: 'Throttle check failed', detail: throttleError.message }, 500)
     }
 
     if (!updated || updated.length === 0) {
       console.log('[trigger-deploy] Throttled: last deploy < 60s ago, skipping')
-      return json({ status: 'throttled', message: 'Cooldown active, deploy skipped' }, 200)
+      return respond({ status: 'throttled', message: 'Cooldown active, deploy skipped' }, 200)
     }
 
     // ── 4. 触发 EdgeOne 重新部署 ──────────────────────────────────
@@ -79,27 +76,34 @@ Deno.serve(async (req: Request) => {
 
     if (!deployRes.ok) {
       const errText = await deployRes.text()
-      console.error(
-        `[trigger-deploy] EdgeOne responded ${deployRes.status}:`,
-        errText,
-      )
-      return json(
-        { error: `EdgeOne error ${deployRes.status}`, detail: errText },
-        502,
-      )
+      console.error(`[trigger-deploy] EdgeOne responded ${deployRes.status}:`, errText)
+      return respond({ error: `EdgeOne error ${deployRes.status}`, detail: errText }, 502)
     }
 
     console.log('[trigger-deploy] Deploy triggered successfully')
-    return json({ status: 'triggered', message: 'EdgeOne deploy triggered' }, 200)
+    return respond({ status: 'triggered', message: 'EdgeOne deploy triggered' }, 200)
   } catch (err) {
     console.error('[trigger-deploy] Unexpected error:', err)
-    return json({ error: String(err) }, 500)
+    return respond({ error: String(err) }, 500)
   }
 })
 
-function json(body: unknown, status: number): Response {
+function respond(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
   })
+}
+
+// 固定时间字符串比较，防止短路求值导致的时序侧信道
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // 长度不等时仍走完比较循环，避免立即返回泄露长度信息
+    let diff = 0
+    for (let i = 0; i < b.length; i++) diff |= (a.charCodeAt(i % a.length) ^ b.charCodeAt(i))
+    return false
+  }
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= (a.charCodeAt(i) ^ b.charCodeAt(i))
+  return diff === 0
 }
