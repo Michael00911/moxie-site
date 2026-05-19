@@ -12,9 +12,12 @@
 
 # testing
 /coverage
-# /docs/test-result/*
-# /docs/test-results/*
+/docs/test-result/*
+/docs/test-results/*
 /docs/test-plan/*
+!/docs/test-plan/T1-*.md
+!/docs/test-plan/T2-*.md
+!/docs/test-plan/T3-*.md
 /docs/test-system/*
 /docs/skills/*
 
