@@ -85,6 +85,7 @@ assert(
   !/distDir/.test(configSrc) || /distDir\s*:\s*["']out["']/.test(configSrc),
   "无自定义 distDir 或 distDir 为 out"
 );
+assert("TC-C4", /trailingSlash\s*:\s*true/.test(configSrc), "trailingSlash: true 配置存在（EdgeOne 路由无歧义必需）");
 
 // ── TC-G：generateStaticParams 覆盖率 ─────────────────────────────
 
@@ -131,12 +132,13 @@ console.log("\n[TC-E] out/ 产物完整性");
 const totalHtml = countByExt(OUT, ".html");
 assertGte("TC-E1", totalHtml, 100, "out/ HTML 文件总数");
 
+// trailingSlash: true → 每个路由输出为 slug/index.html，而非 slug.html
 const REQUIRED_HTML = [
   "index.html",
-  "tools.html",
-  join("tools", "claude-code.html"),
-  "compare.html",
-  "about.html",
+  join("tools", "index.html"),
+  join("tools", "claude-code", "index.html"),
+  join("compare", "index.html"),
+  join("about", "index.html"),
 ];
 let requiredHtmlOk = 0;
 for (const f of REQUIRED_HTML) {
@@ -156,7 +158,7 @@ assert("TC-E5", existsSync(join(OUT, "404.html")), "out/404.html 存在");
 
 console.log("\n[TC-H] HTML 内容验证");
 
-const claudeHtmlPath = join(OUT, "tools", "claude-code.html");
+const claudeHtmlPath = join(OUT, "tools", "claude-code", "index.html");
 const claudeHtml = existsSync(claudeHtmlPath) ? readFileSync(claudeHtmlPath, "utf-8") : "";
 
 assert("TC-H1", /lang="zh-CN"/.test(claudeHtml), 'HTML lang="zh-CN"');
@@ -174,28 +176,34 @@ const indexHtml = existsSync(indexHtmlPath) ? readFileSync(indexHtmlPath, "utf-8
 assert("TC-H6", /Claude Code|Cursor|Deepseek/.test(indexHtml), "首页包含工具卡片内容");
 assert("TC-H7", /写作助手|视频制作|图像生成/.test(indexHtml), "首页包含分类导航");
 
-// TC-H9: compare 页面非空
+// TC-H9: compare 页面非空（trailingSlash → slug/index.html）
 const compareDir = join(OUT, "compare");
-const compareFiles = existsSync(compareDir)
-  ? readdirSync(compareDir).filter(f => f.endsWith(".html"))
+const compareSlugs = existsSync(compareDir)
+  ? readdirSync(compareDir, { withFileTypes: true })
+      .filter(f => f.isDirectory() && !f.name.startsWith("__"))
+      .filter(f => existsSync(join(compareDir, f.name, "index.html")))
+      .map(f => f.name)
   : [];
-if (compareFiles.length > 0) {
-  const size = statSync(join(compareDir, compareFiles[0])).size;
-  assert("TC-H9", size >= 5000, `compare/${compareFiles[0]} 大小 ${size} bytes（期望 ≥ 5KB）`);
+if (compareSlugs.length > 0) {
+  const size = statSync(join(compareDir, compareSlugs[0], "index.html")).size;
+  assert("TC-H9", size >= 5000, `compare/${compareSlugs[0]}/index.html 大小 ${size} bytes（期望 ≥ 5KB）`);
 } else {
-  assert("TC-H9", false, "out/compare/ 目录下无 HTML 文件");
+  assert("TC-H9", false, "out/compare/ 目录下无子页面");
 }
 
-// TC-H10: alternatives 页面非空
+// TC-H10: alternatives 页面非空（trailingSlash → slug/index.html）
 const altDir = join(OUT, "alternatives");
-const altFiles = existsSync(altDir)
-  ? readdirSync(altDir).filter(f => f.endsWith(".html"))
+const altSlugs = existsSync(altDir)
+  ? readdirSync(altDir, { withFileTypes: true })
+      .filter(f => f.isDirectory() && !f.name.startsWith("__"))
+      .filter(f => existsSync(join(altDir, f.name, "index.html")))
+      .map(f => f.name)
   : [];
-if (altFiles.length > 0) {
-  const size = statSync(join(altDir, altFiles[0])).size;
-  assert("TC-H10", size >= 3000, `alternatives/${altFiles[0]} 大小 ${size} bytes（期望 ≥ 3KB）`);
+if (altSlugs.length > 0) {
+  const size = statSync(join(altDir, altSlugs[0], "index.html")).size;
+  assert("TC-H10", size >= 3000, `alternatives/${altSlugs[0]}/index.html 大小 ${size} bytes（期望 ≥ 3KB）`);
 } else {
-  assert("TC-H10", false, "out/alternatives/ 目录下无 HTML 文件");
+  assert("TC-H10", false, "out/alternatives/ 目录下无子页面");
 }
 
 // ── TC-L：本地路由访问测试 ─────────────────────────────────────────
@@ -205,18 +213,20 @@ console.log("\n[TC-L] 本地静态服务器路由测试（Node.js http）");
 async function runRouteTests() {
   const port = Math.floor(47000 + Math.random() * 1000);
 
-  // 静态文件服务器：path → out/ 文件
+  // 静态文件服务器：模拟 trailingSlash: true 的 CDN 行为
+  // /slug/ 或 /slug → out/slug/index.html
   const server = http.createServer((req, res) => {
-    let urlPath = (req.url ?? "/").split("?")[0];
+    const urlPath = (req.url ?? "/").split("?")[0].replace(/\/+$/, "") || "/";
 
-    // 规范化路径
-    if (urlPath === "/") urlPath = "/index.html";
-    else if (!urlPath.endsWith(".html") && !urlPath.includes(".")) {
-      urlPath = urlPath + ".html";
-    }
+    const candidates = urlPath === "/"
+      ? [join(OUT, "index.html")]
+      : [
+          join(OUT, urlPath, "index.html"),   // trailingSlash: slug/index.html
+          join(OUT, urlPath + ".html"),        // 兼容根级特殊文件（404.html 等）
+        ];
 
-    const filePath = join(OUT, urlPath);
-    if (existsSync(filePath) && statSync(filePath).isFile()) {
+    const filePath = candidates.find(p => existsSync(p) && statSync(p).isFile());
+    if (filePath) {
       const ext = filePath.endsWith(".css") ? "text/css"
         : filePath.endsWith(".js") ? "application/javascript"
         : "text/html; charset=utf-8";
@@ -239,41 +249,21 @@ async function runRouteTests() {
   // 收集所有待测路由
   const routes: string[] = ["/", "/tools", "/compare", "/alternatives", "/about", "/404"];
 
-  // 工具详情页
-  if (existsSync(join(OUT, "tools"))) {
-    for (const f of readdirSync(join(OUT, "tools"))) {
-      if (f.endsWith(".html") && !f.startsWith("__")) {
-        routes.push("/tools/" + f.replace(/\.html$/, ""));
+  // trailingSlash: true → 动态路由输出为子目录，通过 isDirectory() 收集
+  function collectSlugRoutes(segment: string) {
+    const dir = join(OUT, segment);
+    if (!existsSync(dir)) return;
+    for (const f of readdirSync(dir, { withFileTypes: true })) {
+      if (f.isDirectory() && !f.name.startsWith("__")) {
+        routes.push(`/${segment}/${f.name}`);
       }
     }
   }
 
-  // compare 页
-  if (existsSync(join(OUT, "compare"))) {
-    for (const f of readdirSync(join(OUT, "compare"))) {
-      if (f.endsWith(".html") && !f.startsWith("__")) {
-        routes.push("/compare/" + f.replace(/\.html$/, ""));
-      }
-    }
-  }
-
-  // alternatives 页
-  if (existsSync(join(OUT, "alternatives"))) {
-    for (const f of readdirSync(join(OUT, "alternatives"))) {
-      if (f.endsWith(".html") && !f.startsWith("__")) {
-        routes.push("/alternatives/" + f.replace(/\.html$/, ""));
-      }
-    }
-  }
-
-  // industries 页
-  if (existsSync(join(OUT, "industries"))) {
-    for (const f of readdirSync(join(OUT, "industries"))) {
-      if (f.endsWith(".html") && !f.startsWith("__")) {
-        routes.push("/industries/" + f.replace(/\.html$/, ""));
-      }
-    }
-  }
+  collectSlugRoutes("tools");
+  collectSlugRoutes("compare");
+  collectSlugRoutes("alternatives");
+  collectSlugRoutes("industries");
 
   console.log(`  → 共 ${routes.length} 条路由待测试`);
 
