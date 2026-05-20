@@ -36,12 +36,10 @@ jobs:
           SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           FEISHU_ALERT_WEBHOOK:      ${{ secrets.FEISHU_ALERT_WEBHOOK }}
+          INPUT_SOURCE:              ${{ github.event.inputs.source }}
+          INPUT_DRY_RUN:             ${{ github.event.inputs.dry_run }}
         run: |
-          ARGS=""
-          if [ -n "${{ github.event.inputs.source }}" ]; then
-            ARGS="$ARGS --source ${{ github.event.inputs.source }}"
-          fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
-          fi
-          python scripts/crawler/run.py $ARGS
+          EXTRA_ARGS=()
+          [ -n "$INPUT_SOURCE"        ] && EXTRA_ARGS+=(--source "$INPUT_SOURCE")
+          [ "$INPUT_DRY_RUN" = "true" ] && EXTRA_ARGS+=(--dry-run)
+          python scripts/crawler/run.py "${EXTRA_ARGS[@]}"

@@ -72,13 +72,16 @@ def _print_source_result(key: str, name: str, r: dict) -> None:
         pages       = r.get("pages", 0)
         total_pages = r.get("total_pages", pages)
         parsed      = r.get("parsed", 0)
-        inserted    = r.get("inserted", 0)
-        skipped     = r.get("skipped", 0)
         elapsed     = r.get("elapsed", 0)
         pages_str   = f"{pages}/{total_pages}" if total_pages != pages else str(pages)
+        # dry-run 时 inserted/skipped 字段不存在，显示 —
+        if "inserted" in r:
+            write_info = f" | 写入: {r['inserted']} 条 | 跳过: {r['skipped']} 条"
+        else:
+            write_info = " | 写入: — | 跳过: —"
         print(f"  [{key}] {name}")
         print(f"       状态: 成功 | 耗时: {_fmt_time(elapsed)} | 页数: {pages_str} 页"
-              f" | 解析: {parsed} 条 | 写入: {inserted} 条 | 跳过: {skipped} 条")
+              f" | 解析: {parsed} 条{write_info}")
     else:
         err = r.get("error", "未知错误")
         print(f"  [{key}] {name}")
@@ -87,6 +90,12 @@ def _print_source_result(key: str, name: str, r: dict) -> None:
 
 def run(only_source: str | None = None, dry_run: bool = False) -> None:
     sources  = _load_sources()
+
+    if only_source and only_source not in sources:
+        known = ", ".join(sources.keys())
+        print(f"[run] 未知数据源: '{only_source}'，可用值: {known}")
+        sys.exit(1)
+
     now      = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     mode_str = "dry-run（只解析不写入）" if dry_run else "正式写入"
 
@@ -142,9 +151,13 @@ def run(only_source: str | None = None, dry_run: bool = False) -> None:
         _print_source_result(key, r.get("name", key), r)
 
     print(SEP2)
+    if dry_run:
+        total_write = "写入: — | 跳过: —"
+    else:
+        total_write = f"写入: {total_inserted} 条 | 跳过: {total_skipped} 条"
     print(
         f"  合计 | 耗时: {_fmt_time(total_elapsed)} | 页数: {total_pages} 页"
-        f" | 解析: {total_parsed} 条 | 写入: {total_inserted} 条 | 跳过: {total_skipped} 条"
+        f" | 解析: {total_parsed} 条 | {total_write}"
     )
     print(SEP)
 

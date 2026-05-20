@@ -78,9 +78,13 @@ def main(dry_run: bool = False) -> dict:
 
     if dry_run:
         print(f"[yc] 完成（dry-run）：共解析 {total_parsed} 条，未写入")
-    else:
-        print(f"[yc] 完成：写入 {total_inserted} 条 / 共解析 {total_parsed} 条")
+        return {
+            "pages":       pages_fetched,
+            "total_pages": total_pages,
+            "parsed":      total_parsed,
+        }
 
+    print(f"[yc] 完成：写入 {total_inserted} 条 / 共解析 {total_parsed} 条")
     return {
         "pages":       pages_fetched,
         "total_pages": total_pages,

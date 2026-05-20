@@ -49,7 +49,7 @@ def run(max_pages: int, dry_run: bool) -> None:
     print("\n[1/4] 拉取第 1 页，获取数据源概况...")
     first = fetch_json(_API_BASE, params={"industry": "Artificial Intelligence", "page": 1})
     if not first:
-        print("  ✗ 第 1 页拉取失败，请检查网络或 YC API 可用性")
+        print("  [FAIL] 第 1 页拉取失败，请检查网络或 YC API 可用性")
         sys.exit(1)
 
     total_pages = first.get("totalPages", 1)
@@ -89,7 +89,7 @@ def run(max_pages: int, dry_run: bool) -> None:
             )
 
         if data is None:
-            print(f"  第 {page} 页  ✗ 拉取失败，跳过")
+            print(f"  第 {page} 页  [FAIL] 拉取失败，跳过")
             continue
 
         companies = data.get("companies", [])
