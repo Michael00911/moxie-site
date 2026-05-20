@@ -1,19 +1,142 @@
 # pr-submit
 
-Read the skill definition at `docs/skills/pr-submit.md` and execute all five steps exactly as described there.
+创建或更新当前分支的 Pull Request，**全程使用中文输出**。
 
-Use `$ARGUMENTS` as the task identifier (e.g. `T2`, `moxie-467`).
+**调用方式：** `/pr-submit <任务标题或编号>`（例：`/pr-submit T3` 或 `/pr-submit moxie-468`）
 
-After building the PR title and body per the skill template, run:
+任务标识符通过 `$ARGUMENTS` 传入。
 
-```bash
-gh pr create --title "<title>" --body "<body>"
+---
+
+## 一、PR 规则总览
+
+本项目所有 PR 必须满足以下规则（优先级从高到低）：
+
+| 规则 | 来源 | 是否阻塞合并 |
+|------|------|------------|
+| PR 标题或正文包含 `task:#N`（例：`task: #241`） | CLAUDE.md | ✅ 是（CI 强制检查） |
+| 自动化测试用例 100% 通过 | 测试方案 | ✅ 是 |
+| 🔴 严重代码评审问题已修复 | 代码评审报告 | ✅ 是 |
+| 🟠 重要代码评审问题已修复或有明确计划 | 代码评审报告 | ⚠️ 建议 |
+| 手动验证步骤（TC-P）已完成或有明确原因挂起 | 测试方案 | ⚠️ 建议 |
+| 🟡/🟢 中低级评审问题已记录 | 代码评审报告 | ❌ 否 |
+
+---
+
+## 二、执行步骤
+
+### Step 1：解析任务信息
+
+从 `$ARGUMENTS` 中提取任务编号（如 `T3`、`moxie-468`）和当前 git 分支名（`git branch --show-current`），在以下位置查找文件：
+
+- **测试方案：** `docs/test-plan/` 中文件名包含任务编号的 `.md` 文件
+- **测试结果：** `docs/test-result/` 中文件名包含任务编号的 `.md` 文件（取最新）
+- **代码评审：** `docs/test-result/` 中 fix-report 或 code-review 相关文件（取最近一份）
+- **任务跟踪 URL：** `https://rd.sdtads.com`（见 CLAUDE.md）
+
+若任何文件找不到，在 PR 正文相应区块注明"暂无"，不中断流程。
+
+---
+
+### Step 2：提取测试结果摘要
+
+读取测试结果文件，提取"执行汇总"表格。按以下格式转换每个 TC 分类的状态：
+
+```
+✅ 全通过   → ✅ {分类} {通过数}/{用例数}
+❌ 有失败   → ❌ {分类} {通过数}/{用例数}（失败：{失败用例 ID}）
+🔲 待手动   → 🔲 {分类} 待手动操作
+⚠️ 有偏差  → ⚠️ {分类} 通过但有偏差（见偏差列表）
 ```
 
-or, if a PR already exists for the current branch:
+若测试结果文件不存在，输出 `⚠️ 未找到测试结果，请在合并前手动附上`。
+
+---
+
+### Step 3：提取代码评审问题
+
+读取 fix-report 或 code-review 文件，按严重性分组列出问题状态：
+
+- **🔴 严重**：列出每个问题的标题 + 当前状态（已修复 / 待修复）
+- **🟠 重要**：列出每个问题的标题 + 当前状态
+- **🟡🟢 中低**：合并列出总数即可
+
+状态判断方式：
+- 若当前分支的 git diff 或最近提交中修改了评审指出的文件/行 → 标记为"已修复"
+- 否则保留"待修复"，在 PR 正文中注明是否计划在本 PR 解决
+
+---
+
+### Step 4：构建 PR 标题
+
+格式：`<动词>: <变更简述> task: #<N>`
+
+- 动词参照约定：`feat`（新功能）、`fix`（修复）、`refactor`（重构）、`test`（测试）、`docs`（文档）
+- `#N` 从任务编号解析：`T3` → 查找对应线性任务 ID；`moxie-468` → `#468`
+- 若无法自动推断任务编号，在标题末尾保留占位：`task: #TODO`
+
+---
+
+### Step 5：填充 PR 正文并提交
+
+将以下模板中所有 `{{...}}` 占位符替换为 Step 1-4 提取的实际内容后执行：
 
 ```bash
+# 若 PR 不存在：
+gh pr create --title "<title>" --body "<body>"
+
+# 若 PR 已存在：
 gh pr edit --title "<title>" --body "<body>"
 ```
 
-Do not ask for confirmation before running the gh command unless a 🔴 unresolved review issue is detected, in which case warn the user first.
+若检测到 🔴 未修复的严重问题，**在执行前向用户发出警告**，不自动提交。
+
+---
+
+## 三、PR 正文模板
+
+```markdown
+## 变更摘要
+
+{{1-3 条变更要点，每条一行，以 - 开头}}
+
+## 测试结果
+
+{{测试结果摘要，每分类一行，格式见 Step 2}}
+
+> 测试方案：[{{测试方案文件名}}](docs/test-plan/{{测试方案文件名}})
+> 测试报告：[{{测试结果文件名}}](docs/test-result/{{测试结果文件名}})
+
+## 代码评审问题处理
+
+{{每个 🔴/🟠 问题一行，格式："#编号 问题标题 — 状态"}}
+{{🟡/🟢 问题合并：N 条中低优先级问题，已记录，不阻塞本 PR}}
+
+## 挂起事项（不阻塞本 PR）
+
+{{TC-P 手动步骤或未解决的 🟠 问题，每条一行，以 [ ] 格式列出}}
+{{若无挂起事项，填写"无"}}
+
+## 检查清单
+
+- [ ] PR 标题包含 task:#N 引用
+- [ ] 自动化测试 100% 通过（或失败原因已说明）
+- [ ] 🔴 严重评审问题已全部修复
+- [ ] 🟠 重要评审问题已修复或计划已记录
+
+task: #{{任务编号}}
+
+🤖 Generated with [Claude Code](https://claude.ai/claude-code)
+```
+
+---
+
+## 四、边界情况处理
+
+| 情况 | 处理方式 |
+|------|---------|
+| 没有测试方案文件 | 测试结果区块注明"本任务无对应测试方案" |
+| 没有代码评审文件 | 评审区块注明"本次未执行代码评审" |
+| 有 🔴 严重问题未修复 | 在 PR 标题末尾追加 `[WIP]`，正文顶部加警告横幅，提示用户确认 |
+| TC-P 手动步骤未执行 | 在挂起事项中逐条列出，注明预计完成时间 |
+| 任务编号无法推断 | 在标题保留 `task: #TODO` 并提示用户手动填写 |
