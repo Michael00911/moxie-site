@@ -7,7 +7,7 @@ export function loadEnv(file: string) {
   try {
     const lines = readFileSync(file, 'utf-8').split('\n')
     for (const line of lines) {
-      const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
+      const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/i)
       if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim()
     }
   } catch { /* 从 shell 环境读取 */ }

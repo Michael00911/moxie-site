@@ -49,12 +49,12 @@ function loadEnv(filePath: string): void {
 
 loadEnv(resolve(process.cwd(), ".env.local"));
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error(
-    "[seed] 缺少环境变量：NEXT_PUBLIC_SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY\n" +
+    "[seed] 缺少环境变量：SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY\n" +
     "       请检查 .env.local"
   );
   process.exit(1);
@@ -423,7 +423,7 @@ const SEED_TOOLS: Tool[] = [
     views: 0,
   },
   {
-    slug: "11labs-music",
+    slug: "suno",
     name: "Suno",
     tagline: "AI 一键生成完整歌曲",
     description: "输入歌词或主题，AI 生成带人声的完整歌曲，V4 模型质量惊艳。",
@@ -497,7 +497,7 @@ const SEED_TOOLS: Tool[] = [
     views: 0,
   },
   {
-    slug: "n8n-cloud",
+    slug: "make-com",
     name: "Make",
     tagline: "可视化自动化平台",
     description: "Zapier 替代，复杂流程更便宜。",

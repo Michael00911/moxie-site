@@ -26,7 +26,7 @@ const headers = {
 // ── 工具数据 ───────────────────────────────────────────────────
 const tools = [
   {
-    slug: 'perplexity-ai',
+    slug: 'perplexity',
     name: 'Perplexity AI',
     name_en: 'Perplexity AI',
     tagline: '带来源引用的 AI 实时问答搜索',
@@ -45,7 +45,7 @@ const tools = [
     views: 0,
   },
   {
-    slug: 'runway-gen3',
+    slug: 'runway',
     name: 'Runway Gen-3 Alpha',
     name_en: 'Runway Gen-3 Alpha',
     tagline: '好莱坞级别的 AI 文生视频',
@@ -121,26 +121,7 @@ const tools = [
     views: 0,
   },
   {
-    slug: 'elevenlabs',
-    name: 'ElevenLabs',
-    name_en: 'ElevenLabs',
-    tagline: '最自然的 AI 语音克隆与多语言配音',
-    description: 'ElevenLabs 提供高保真语音合成和声音克隆，只需 1 分钟样本即可克隆声音。支持 29 种语言，提供情感控制和说话节奏调整，广泛用于有声书、播客、视频配音。',
-    level: 'L3',
-    rating: 5,
-    category: 'audio',
-    tags: ['语音克隆', 'TTS', '多语言', '有声书', '配音'],
-    pricing: 'freemium',
-    price_note: '免费版每月 10,000 字符；Starter $5/月 30,000 字符',
-    website_url: 'https://elevenlabs.io',
-    published_at: '2026-02-18',
-    status: 'approved',
-    source: 'crawler',
-    saves: 0,
-    views: 0,
-  },
-  {
-    slug: 'n8n-workflow',
+    slug: 'n8n',
     name: 'n8n',
     name_en: 'n8n',
     tagline: '可自托管的开源 AI 工作流自动化平台',

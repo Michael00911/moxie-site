@@ -13,7 +13,6 @@
 # testing
 /coverage
 /docs/test-system/*
-/docs/skills/*
 /docs/test-trisql/*
 /docs/test-plan/*
 /docs/test-result/*

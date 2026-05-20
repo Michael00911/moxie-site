@@ -316,27 +316,48 @@ async function runE2E() {
     const g = makeGuard()
     if (g.shouldSkip()) { skip('TC-E2E4', '连续失败次数过多') }
     else {
-      if (!await resetThrottle(120)) { skip('TC-E2E4', '节流时间重置失败') }
-      else {
-        const tBefore = await getThrottleTime()
+      // fix-1: 从 DB 动态取任意有效 slug，避免硬编码 claude-code 在 DB 中不存在导致 0 行匹配
+      const { data: toolRows, error: toolErr } = await sqlQuery(
+        `SELECT slug FROM public.tools WHERE status = 'approved' ORDER BY created_at LIMIT 1`
+      )
+      if (toolErr || !toolRows?.[0]?.slug) {
+        skip('TC-E2E4', `tools 表无可用记录（${toolErr ?? '空结果'}）`)
+      } else {
+        const targetSlug = toolRows[0].slug as string
+        log(`  ℹ️  TC-E2E4: 目标 slug = '${targetSlug}'`)
 
-        // UPDATE tools SET name = name（零副作用，但触发 AFTER UPDATE STATEMENT 触发器）
-        const { error: updErr } = await restPatch(
-          'tools', "slug=eq.claude-code",
-          { updated_at: new Date().toISOString() }
-        )
-        if (updErr) {
-          record('TC-E2E4', false, 'UPDATE tools WHERE slug=claude-code 执行失败', updErr)
+        // fix-2: 等待 TC-TH3 的遗留 pg_net 请求全部落地，再重置节流时间
+        log(`  ⏳ TC-E2E4: 等待 5s 清除遗留 pg_net...`)
+        await sleep(5_000)
+
+        if (!await resetThrottle(120)) {
+          skip('TC-E2E4', '节流时间重置失败')
         } else {
-          log(`  ⏳ TC-E2E4: 等待 ${WAIT_MS / 1000}s（pg_net 异步）...`)
-          await sleep(WAIT_MS)
+          const tBefore = await getThrottleTime()
+          const ageSecs = tBefore ? (Date.now() - tBefore.getTime()) / 1000 : 0
 
-          const tAfter = await getThrottleTime()
-          const updated = tBefore && tAfter && tAfter > tBefore
-          record('TC-E2E4', !!updated,
-            `UPDATE tools 触发链路生效（deploy_throttle: ${tBefore?.toISOString().slice(11,19)} → ${tAfter?.toISOString().slice(11,19)}）`,
-            !updated ? 'deploy_throttle 未更新，Edge Function 可能未被调用' : undefined
-          )
+          // fix-2: 验证重置确实生效；若仍被遗留 pg_net 覆盖则跳过（避免误判）
+          if (ageSecs < 90) {
+            skip('TC-E2E4', `节流时间重置后仍被覆盖（${tBefore?.toISOString().slice(11,19)}，age=${ageSecs.toFixed(0)}s），存在遗留 pg_net 请求`)
+          } else {
+            const { error: updErr } = await restPatch(
+              'tools', `slug=eq.${encodeURIComponent(targetSlug)}`,
+              { updated_at: new Date().toISOString() }
+            )
+            if (updErr) {
+              record('TC-E2E4', false, `UPDATE tools.slug='${targetSlug}' 执行失败`, updErr)
+            } else {
+              log(`  ⏳ TC-E2E4: 等待 ${WAIT_MS / 1000}s（pg_net 异步）...`)
+              await sleep(WAIT_MS)
+
+              const tAfter = await getThrottleTime()
+              const updated = tBefore && tAfter && tAfter > tBefore
+              record('TC-E2E4', !!updated,
+                `UPDATE tools 触发链路生效（deploy_throttle: ${tBefore?.toISOString().slice(11,19)} → ${tAfter?.toISOString().slice(11,19)}）`,
+                !updated ? 'deploy_throttle 未更新，Edge Function 可能未被调用' : undefined
+              )
+            }
+          }
         }
       }
     }
@@ -430,7 +451,7 @@ async function main() {
   if (existsSync(outPath)) {
     const existing = readFileSync(outPath, 'utf-8')
     const match = existing.match(/(## 手动验证补充[\s\S]*?)(?=\n## 跳过说明|\n## 验收结论|$)/)
-    if (match) manualSection = match[1].trimEnd()
+    if (match) manualSection = match[1].trimEnd().replace(/\n---\s*$/, '')
   }
 
   writeFileSync(outPath, buildMarkdown(elapsed, manualSection), 'utf-8')
