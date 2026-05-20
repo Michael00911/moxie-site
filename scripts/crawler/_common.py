@@ -153,10 +153,16 @@ def _existing_source_urls(source: str) -> set[str]:
     return existing
 
 
-def save_to_supabase(items: list[dict], source: str = "crawler:yc") -> int:
+def save_to_supabase(
+    items: list[dict],
+    source: str = "crawler:yc",
+    existing_urls: Optional[set[str]] = None,
+) -> int:
     """
     批量写入 submissions 表。
-    客户端分页去重（避免 1000 条上限），唯一索引作安全兜底。
+    existing_urls: 调用方预先查好的已有 source_url 集合；
+                   传入时跳过数据库查询并在写入后自动更新该 set，
+                   实现跨页去重；不传则按旧行为每次查库。
     返回实际写入条数。
     """
     if not items:
@@ -166,7 +172,7 @@ def save_to_supabase(items: list[dict], source: str = "crawler:yc") -> int:
         print("[save] 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY，跳过写入")
         return 0
 
-    existing = _existing_source_urls(source)
+    existing = existing_urls if existing_urls is not None else _existing_source_urls(source)
     to_insert = [it for it in items if it.get("source_url") not in existing]
 
     if not to_insert:
@@ -185,6 +191,8 @@ def save_to_supabase(items: list[dict], source: str = "crawler:yc") -> int:
         if resp.status_code in (200, 201, 204):
             skipped = len(items) - len(rows)
             print(f"[save] 写入 {len(rows)} 条（跳过 {skipped} 条重复）")
+            if existing_urls is not None:
+                existing_urls.update(it["source_url"] for it in to_insert if it.get("source_url"))
             return len(rows)
 
         err_msg = f"Supabase 写入失败 HTTP {resp.status_code}: {resp.text[:200]}"

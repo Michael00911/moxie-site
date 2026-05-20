@@ -10,6 +10,15 @@
 !.yarn/releases
 !.yarn/versions
 
+# tools / IDE
+/.idea
+/.pytest_cache
+
+# Python 字节码（不提交编译缓存）
+__pycache__/
+*.pyc
+*.pyo
+
 # testing
 /coverage
 /docs/test-system/*

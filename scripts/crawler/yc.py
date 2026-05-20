@@ -22,7 +22,7 @@ _load_env()
 
 # 保证无论从哪个目录运行都能找到 _common
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import fetch_json, clean_item, save_to_supabase  # noqa: E402
+from _common import fetch_json, clean_item, save_to_supabase, _existing_source_urls  # noqa: E402
 
 _API_BASE = "https://api.ycombinator.com/v0.1/companies"
 
@@ -56,7 +56,9 @@ def main() -> None:
         sys.exit(1)
 
     total_pages = first.get("totalPages", 1)
-    print(f"[yc] 共 {total_pages} 页，开始全量抓取...")
+    print(f"[yc] 共 {total_pages} 页，查询已有数据...")
+    existing = _existing_source_urls("crawler:yc")
+    print(f"[yc] 已有 {len(existing)} 条，开始全量抓取...")
 
     for page in range(1, total_pages + 1):
         data = first if page == 1 else fetch_json(
@@ -69,7 +71,7 @@ def main() -> None:
         cleaned = [clean_item(c) for c in valid if c is not None]
 
         total_parsed += len(cleaned)
-        total_inserted += save_to_supabase(cleaned)
+        total_inserted += save_to_supabase(cleaned, existing_urls=existing)
 
         if page % 20 == 0:
             print(f"[yc] 进度 {page}/{total_pages}，已写入 {total_inserted} 条")
