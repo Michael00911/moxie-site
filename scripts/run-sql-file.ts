@@ -22,7 +22,7 @@ loadEnv('.env.local')
 const SUPABASE_URL     = process.env.SUPABASE_URL ?? ''
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 const SUPABASE_PAT     = process.env.SUPABASE_PAT ?? ''
-const PROJECT_REF      = 'lkheprtvomhtitivtuyc'
+const PROJECT_REF      = new URL(SUPABASE_URL || 'https://placeholder.supabase.co').hostname.split('.')[0]
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('❌ 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY'); process.exit(1)
@@ -83,23 +83,17 @@ async function main() {
   console.log(`✅ 执行成功（HTTP ${status}）`)
   if (data) console.log('   返回：', JSON.stringify(data).slice(0, 200))
 
-  // ── 验证：查询刚插入的数据 ────────────────────────────────────
-  console.log('\n🔍 验证查询（最新 10 条 submissions）')
+  // ── 验证：通过第二个参数传入自定义 SQL，或跳过 ────────────────
+  const verifySQL = process.argv[3]
+  if (!verifySQL) {
+    console.log('\n✅ 执行完成（未传入验证查询，如需验证请作为第二参数传入 SQL）')
+    return
+  }
+
+  console.log(`\n🔍 验证查询`)
   console.log('─'.repeat(60))
 
-  const verify = await execSQL(`
-    SELECT
-      id,
-      payload->>'name'   AS tool_name,
-      source,
-      status,
-      submitter_email,
-      LEFT(reject_reason, 30) AS reject_reason,
-      to_char(created_at, 'MM-DD HH24:MI:SS') AS created_at
-    FROM public.submissions
-    ORDER BY created_at DESC
-    LIMIT 10
-  `)
+  const verify = await execSQL(verifySQL)
 
   if (verify.error) {
     console.error('❌ 验证查询失败：', verify.error.slice(0, 300))
@@ -108,15 +102,15 @@ async function main() {
 
   const rows: Record<string, unknown>[] = verify.data ?? []
   if (rows.length === 0) {
-    console.log('⚠️  submissions 表为空，插入可能未生效')
+    console.log('⚠️  验证查询返回 0 行，请确认数据是否写入')
   } else {
-    console.log(`共 ${rows.length} 条（最新在前）：\n`)
-    const header = ['tool_name', 'source', 'status', 'submitter_email', 'reject_reason', 'created_at']
-    const widths  = [18, 16, 10, 26, 22, 18]
-    console.log(header.map((h, i) => h.padEnd(widths[i])).join('  '))
-    console.log(header.map((_, i) => '─'.repeat(widths[i])).join('  '))
+    const keys = Object.keys(rows[0])
+    const widths = keys.map(k => Math.min(Math.max(k.length, 10), 30))
+    console.log(`共 ${rows.length} 行：\n`)
+    console.log(keys.map((k, i) => k.padEnd(widths[i])).join('  '))
+    console.log(keys.map((_, i) => '─'.repeat(widths[i])).join('  '))
     for (const r of rows) {
-      console.log(header.map((h, i) => String(r[h] ?? '').slice(0, widths[i]).padEnd(widths[i])).join('  '))
+      console.log(keys.map((k, i) => String(r[k] ?? '').slice(0, widths[i]).padEnd(widths[i])).join('  '))
     }
   }
 }

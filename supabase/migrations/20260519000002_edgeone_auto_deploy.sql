@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS public.deploy_config (
 
 ALTER TABLE public.deploy_config ENABLE ROW LEVEL SECURITY;
 
--- 无任何开放策略 = anon / authenticated 无法读取
+-- 与 deploy_throttle 保持一致：显式撤销权限，防止误加 SELECT 策略时泄露 trigger_secret
+REVOKE ALL ON public.deploy_config FROM anon, authenticated;
 
 
 -- -------------------------------------------------------------

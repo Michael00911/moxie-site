@@ -27,7 +27,7 @@ loadEnv('.env.local')
 const SUPABASE_URL     = process.env.SUPABASE_URL ?? ''
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 const SUPABASE_PAT     = process.env.SUPABASE_PAT ?? ''
-const PROJECT_REF      = 'lkheprtvomhtitivtuyc'
+const PROJECT_REF      = new URL(SUPABASE_URL || 'https://placeholder.supabase.co').hostname.split('.')[0]
 const FUNCTION_URL     = `${SUPABASE_URL}/functions/v1/trigger-deploy`
 const REST_URL         = `${SUPABASE_URL}/rest/v1`
 const WAIT_MS          = 8_000
