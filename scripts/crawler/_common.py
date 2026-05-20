@@ -129,11 +129,34 @@ def clean_item(item: dict) -> dict:
 
 
 # ── Supabase 写入 ────────────────────────────────────────────────────────
+def _existing_source_urls(source: str) -> set[str]:
+    """分页拉取已有 source_url，避免 Supabase 默认 1000 条上限。"""
+    existing: set[str] = set()
+    page_size = 1000
+    offset = 0
+    h = {**_supabase_headers(), "Range-Unit": "items"}
+    while True:
+        resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/submissions",
+            headers={**h, "Range": f"{offset}-{offset + page_size - 1}"},
+            params={"select": "payload->>source_url", "source": f"eq.{source}"},
+            timeout=15,
+        )
+        if resp.status_code not in (200, 206):
+            print(f"[save] 查询已有记录失败 HTTP {resp.status_code}")
+            break
+        rows = resp.json()
+        existing.update(r.get("source_url") for r in rows if r.get("source_url"))
+        if len(rows) < page_size:
+            break
+        offset += page_size
+    return existing
+
+
 def save_to_supabase(items: list[dict], source: str = "crawler:yc") -> int:
     """
     批量写入 submissions 表。
-    依赖数据库唯一索引 submissions_source_url_unique 实现去重
-    （ON CONFLICT DO NOTHING），无需客户端查询已有记录。
+    客户端分页去重（避免 1000 条上限），唯一索引作安全兜底。
     返回实际写入条数。
     """
     if not items:
@@ -143,23 +166,26 @@ def save_to_supabase(items: list[dict], source: str = "crawler:yc") -> int:
         print("[save] 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY，跳过写入")
         return 0
 
-    rows = [{"payload": item, "source": source, "status": "pending"} for item in items]
+    existing = _existing_source_urls(source)
+    to_insert = [it for it in items if it.get("source_url") not in existing]
+
+    if not to_insert:
+        print(f"[save] 全部 {len(items)} 条已存在，跳过")
+        return 0
+
+    rows = [{"payload": item, "source": source, "status": "pending"} for item in to_insert]
 
     try:
         resp = requests.post(
             f"{SUPABASE_URL}/rest/v1/submissions",
-            headers={
-                **_supabase_headers(),
-                "Prefer": "return=representation,resolution=ignore-duplicates",
-            },
+            headers={**_supabase_headers(), "Prefer": "return=minimal"},
             json=rows,
             timeout=30,
         )
-        if resp.status_code in (200, 201):
-            inserted = len(resp.json())
-            skipped = len(rows) - inserted
-            print(f"[save] 写入 {inserted} 条（跳过 {skipped} 条重复）")
-            return inserted
+        if resp.status_code in (200, 201, 204):
+            skipped = len(items) - len(rows)
+            print(f"[save] 写入 {len(rows)} 条（跳过 {skipped} 条重复）")
+            return len(rows)
 
         err_msg = f"Supabase 写入失败 HTTP {resp.status_code}: {resp.text[:200]}"
         print(f"[save] {err_msg}")
