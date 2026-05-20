@@ -143,7 +143,7 @@ def _existing_source_urls(source: str) -> set[str]:
             timeout=15,
         )
         if resp.status_code not in (200, 206):
-            print(f"[save] 查询已有记录失败 HTTP {resp.status_code}")
+            _send_alert(f"查询已有 source_url 失败 HTTP {resp.status_code}，去重降级为 DB 唯一索引兜底")
             break
         rows = resp.json()
         existing.update(r.get("source_url") for r in rows if r.get("source_url"))

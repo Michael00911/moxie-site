@@ -6,7 +6,6 @@ T4 YC 爬虫单元测试
 import sys
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent))
 
