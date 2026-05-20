@@ -103,11 +103,17 @@ function respond(body: unknown, status: number): Response {
   })
 }
 
-// 使用 Deno 原生 crypto.subtle.timingSafeEqual，真正的 constant-time 比较
+// constant-time 字节比较（纯 JS，兼容 Deno Edge Runtime）
+// Web Crypto API 无 timingSafeEqual；用 diff |= 累加器模式，不含任何提前退出分支。
+// 长度不等时将长度 XOR 写入 diff（非零），内容比较仍走完 maxLen 轮，无分支泄露。
 function timingSafeEqual(a: string, b: string): boolean {
   const enc = new TextEncoder()
   const ab = enc.encode(a)
   const bb = enc.encode(b)
-  if (ab.byteLength !== bb.byteLength) return false
-  return crypto.subtle.timingSafeEqual(ab, bb)
+  const maxLen = Math.max(ab.byteLength, bb.byteLength)
+  let diff = ab.byteLength ^ bb.byteLength
+  for (let i = 0; i < maxLen; i++) {
+    diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0)
+  }
+  return diff === 0
 }
