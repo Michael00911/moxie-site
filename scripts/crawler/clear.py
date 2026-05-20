@@ -6,20 +6,9 @@
       python scripts/crawler/clear.py crawler:ph
 """
 import os
-import re
 import sys
 from pathlib import Path
 
-def _load_env() -> None:
-    env_file = Path(__file__).parent.parent.parent / ".env.local"
-    if not env_file.exists():
-        return
-    for line in env_file.read_text(encoding="utf-8").splitlines():
-        m = re.match(r'^([A-Z_][A-Z0-9_]*)=(.*)$', line.strip())
-        if m and m.group(1) not in os.environ:
-            os.environ[m.group(1)] = m.group(2).strip().strip("'\"")
-
-_load_env()
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import _supabase_headers, SUPABASE_URL  # noqa: E402
 

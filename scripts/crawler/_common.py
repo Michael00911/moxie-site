@@ -5,9 +5,23 @@ import os
 import random
 import re
 import time
+from pathlib import Path
 from typing import Optional
 
 import requests
+
+
+# ── 环境加载（本地开发读 .env.local，CI 用系统环境变量）────────────────
+def _load_env() -> None:
+    env_file = Path(__file__).parent.parent.parent / ".env.local"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        m = re.match(r'^([A-Z_][A-Z0-9_]*)=(.*)$', line.strip())
+        if m and m.group(1) not in os.environ:
+            os.environ[m.group(1)] = m.group(2).strip().strip("'\"")
+
+_load_env()
 
 # ── 环境变量 ────────────────────────────────────────────────────────────
 SUPABASE_URL   = os.environ.get("SUPABASE_URL", "").rstrip("/")
@@ -184,7 +198,7 @@ def save_to_supabase(
     try:
         resp = requests.post(
             f"{SUPABASE_URL}/rest/v1/submissions",
-            headers={**_supabase_headers(), "Prefer": "return=minimal"},
+            headers={**_supabase_headers(), "Prefer": "return=minimal,resolution=ignore-duplicates"},
             json=rows,
             timeout=30,
         )

@@ -3,24 +3,9 @@ YC AI 公司爬虫
 数据来源：https://api.ycombinator.com/v0.1/companies?industry=Artificial+Intelligence
 运行：python scripts/crawler/yc.py
 """
-import os
-import re
 import sys
 from pathlib import Path
 
-# 从项目根目录加载 .env.local（本地开发用，CI 用环境变量）
-def _load_env() -> None:
-    env_file = Path(__file__).parent.parent.parent / ".env.local"
-    if not env_file.exists():
-        return
-    for line in env_file.read_text(encoding="utf-8").splitlines():
-        m = re.match(r'^([A-Z_][A-Z0-9_]*)=(.*)$', line.strip())
-        if m and m.group(1) not in os.environ:
-            os.environ[m.group(1)] = m.group(2).strip().strip("'\"")
-
-_load_env()
-
-# 保证无论从哪个目录运行都能找到 _common
 sys.path.insert(0, str(Path(__file__).parent))
 from _common import fetch_json, clean_item, save_to_supabase, _existing_source_urls  # noqa: E402
 
