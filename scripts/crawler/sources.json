@@ -1,0 +1,16 @@
+{
+  "sources": {
+    "yc": {
+      "enabled": true,
+      "name": "Y Combinator AI",
+      "description": "YC 孵化的 AI 公司，按 Artificial Intelligence 行业过滤",
+      "module": "yc"
+    },
+    "ph": {
+      "enabled": false,
+      "name": "Product Hunt",
+      "description": "Product Hunt 热榜产品（待实现）",
+      "module": "ph"
+    }
+  }
+}
