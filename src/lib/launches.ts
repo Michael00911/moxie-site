@@ -206,7 +206,7 @@ export const launches: LaunchEntry[] = [
     date: "2026-05-05",
     slot: 1,
     tier: "gold",
-    toolSlug: "11labs-music",
+    toolSlug: "suno",
     name: "Suno V4 中文歌词",
     emoji: "🎵",
     tagline: "Suno V4 升级中文歌词，押韵更自然",
