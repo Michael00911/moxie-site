@@ -14,7 +14,6 @@ import argparse
 import os
 import re
 import sys
-import time
 from pathlib import Path
 
 # ── 加载 .env.local ──────────────────────────────────────────
@@ -82,7 +81,6 @@ def run(max_pages: int, dry_run: bool) -> None:
         if page == 1:
             data = first
         else:
-            time.sleep(1)  # 1s 礼貌间隔
             data = fetch_json(
                 _API_BASE,
                 params={"industry": "Artificial Intelligence", "page": page},

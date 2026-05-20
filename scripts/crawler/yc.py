@@ -43,8 +43,7 @@ def main(dry_run: bool = False) -> dict:
 
     first = fetch_json(_API_BASE, params={"industry": "Artificial Intelligence", "page": 1})
     if not first:
-        print("[yc] 第一页抓取失败，退出")
-        sys.exit(1)
+        raise RuntimeError("YC API 第一页抓取失败，可能是网络问题或 API 暂时不可用")
 
     total_pages = first.get("totalPages", 1)
 
