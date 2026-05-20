@@ -463,18 +463,26 @@ async function main() {
     log('✅ 所有执行用例通过')
   }
 
-  // 写结果文件
+  // 写结果文件（保留已有文件中的手动验证内容）
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const outDir  = resolve(join(__dirname, '..'), 'docs', 'test-result')
   if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true })
   const outPath = join(outDir, `T3-result-${dateStr}.md`)
-  writeFileSync(outPath, buildMarkdown(elapsed), 'utf-8')
+
+  let manualSection = ''
+  if (existsSync(outPath)) {
+    const existing = readFileSync(outPath, 'utf-8')
+    const match = existing.match(/(## 手动验证补充[\s\S]*?)(?=\n## 跳过说明|\n## 验收结论|$)/)
+    if (match) manualSection = match[1].trimEnd()
+  }
+
+  writeFileSync(outPath, buildMarkdown(elapsed, manualSection), 'utf-8')
   log(`\n📄 结果已写入：${outPath}`)
 
   process.exit(failed > 0 ? 1 : 0)
 }
 
-function buildMarkdown(elapsed: string): string {
+function buildMarkdown(elapsed: string, manualSection = ''): string {
   const date   = new Date().toISOString().slice(0, 10)
   const overall = failed === 0
     ? `✅ 全部执行用例通过（${passed} 通过，${skipped} 跳过）`
@@ -534,7 +542,7 @@ ${detailRows}
 ${testLogs.join('\n')}
 \`\`\`
 
----
+${manualSection ? `---\n\n${manualSection}\n\n` : ''}---
 
 ## 跳过说明
 
