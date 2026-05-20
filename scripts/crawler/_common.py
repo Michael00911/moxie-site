@@ -1,7 +1,6 @@
 """
 爬虫公共函数：网页抓取 / 数据清洗 / Supabase 写入
 """
-import json
 import os
 import random
 import re
@@ -11,18 +10,20 @@ from typing import Optional
 import requests
 
 # ── 环境变量 ────────────────────────────────────────────────────────────
-SUPABASE_URL      = os.environ.get("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY      = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-FEISHU_WEBHOOK    = os.environ.get("FEISHU_ALERT_WEBHOOK", "")
+SUPABASE_URL   = os.environ.get("SUPABASE_URL", "").rstrip("/")
+FEISHU_WEBHOOK = os.environ.get("FEISHU_ALERT_WEBHOOK", "")
 
-_SUPABASE_HEADERS = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json",
-}
+def _supabase_headers() -> dict:
+    """每次调用时读取环境变量，避免模块加载顺序导致鉴权头为空。"""
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    return {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
 
-# ── User-Agent 池 ───────────────────────────────────────────────────────
-_USER_AGENTS = [
+# ── User-Agent 池（供所有爬虫模块导入复用）──────────────────────────────
+USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
@@ -51,40 +52,57 @@ def _send_alert(msg: str) -> None:
         print(f"[ALERT 发送失败] {msg}")
 
 
-# ── 网页抓取 ─────────────────────────────────────────────────────────────
-def fetch_page(url: str) -> Optional[str]:
-    """抓取单个页面，随机 UA，间隔 ≥1s，失败重试 3 次。"""
+# ── 核心 HTTP 请求（内部）────────────────────────────────────────────────
+def _do_fetch(
+    url: str,
+    params: Optional[dict] = None,
+    accept_json: bool = False,
+) -> Optional[requests.Response]:
+    """UA 轮换，间隔 ≥1s，失败重试 3 次（指数退避）。"""
     global _last_request_time
 
+    headers = {"User-Agent": random.choice(USER_AGENTS)}
+    if accept_json:
+        headers["Accept"] = "application/json"
+
     for attempt in range(3):
-        # 保证请求间隔 ≥ 1s
         elapsed = time.time() - _last_request_time
         if elapsed < 1.0:
             time.sleep(1.0 - elapsed)
 
         try:
-            resp = requests.get(
-                url,
-                headers={"User-Agent": random.choice(_USER_AGENTS)},
-                timeout=20,
-            )
+            resp = requests.get(url, headers=headers, params=params, timeout=20)
             _last_request_time = time.time()
-
             if resp.status_code == 200:
-                return resp.text
-
-            print(f"[fetch] 第 {attempt+1} 次尝试 HTTP {resp.status_code}: {url}")
-
+                return resp
+            print(f"[fetch] 第{attempt+1}次 HTTP {resp.status_code}: {url}")
         except requests.RequestException as e:
             _last_request_time = time.time()
-            print(f"[fetch] 第 {attempt+1} 次请求异常: {e}")
+            print(f"[fetch] 第{attempt+1}次异常: {e}")
 
-        # 指数退避：1s / 2s / 4s
         if attempt < 2:
             time.sleep(2 ** attempt)
 
-    _send_alert(f"fetch_page 三次全部失败: {url}")
+    _send_alert(f"fetch 三次全部失败: {url}")
     return None
+
+
+def fetch_page(url: str) -> Optional[str]:
+    """抓取 HTML 页面，返回文本；失败返回 None。"""
+    resp = _do_fetch(url)
+    return resp.text if resp else None
+
+
+def fetch_json(url: str, params: Optional[dict] = None) -> Optional[dict | list]:
+    """抓取 JSON API，返回解析后的 dict 或 list；失败返回 None。"""
+    resp = _do_fetch(url, params=params, accept_json=True)
+    if resp is None:
+        return None
+    try:
+        return resp.json()
+    except Exception as e:
+        print(f"[fetch_json] JSON 解析失败: {e}")
+        return None
 
 
 # ── 数据清洗 ─────────────────────────────────────────────────────────────
@@ -111,60 +129,37 @@ def clean_item(item: dict) -> dict:
 
 
 # ── Supabase 写入 ────────────────────────────────────────────────────────
-def _existing_source_urls(source: str) -> set[str]:
-    """查询数据库中已有的 source_url 集合，避免重复插入。"""
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return set()
-    try:
-        resp = requests.get(
-            f"{SUPABASE_URL}/rest/v1/submissions",
-            headers=_SUPABASE_HEADERS,
-            params={
-                "select": "payload->>source_url",
-                "source": f"eq.{source}",
-            },
-            timeout=15,
-        )
-        if resp.status_code == 200:
-            return {row.get("source_url") for row in resp.json() if row.get("source_url")}
-    except Exception as e:
-        print(f"[save] 查询已有记录失败: {e}")
-    return set()
-
-
 def save_to_supabase(items: list[dict], source: str = "crawler:yc") -> int:
     """
     批量写入 submissions 表。
-    - 跳过 source_url 已存在的记录
-    - 写入失败发飞书告警
-    - 返回实际写入条数
+    依赖数据库唯一索引 submissions_source_url_unique 实现去重
+    （ON CONFLICT DO NOTHING），无需客户端查询已有记录。
+    返回实际写入条数。
     """
     if not items:
         return 0
 
-    if not SUPABASE_URL or not SUPABASE_KEY:
+    if not SUPABASE_URL or not os.environ.get("SUPABASE_SERVICE_ROLE_KEY"):
         print("[save] 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY，跳过写入")
         return 0
 
-    existing = _existing_source_urls(source)
-    to_insert = [it for it in items if it.get("source_url") not in existing]
-
-    if not to_insert:
-        print(f"[save] 全部 {len(items)} 条已存在，跳过")
-        return 0
-
-    rows = [{"payload": item, "source": source, "status": "pending"} for item in to_insert]
+    rows = [{"payload": item, "source": source, "status": "pending"} for item in items]
 
     try:
         resp = requests.post(
             f"{SUPABASE_URL}/rest/v1/submissions",
-            headers={**_SUPABASE_HEADERS, "Prefer": "return=minimal"},
+            headers={
+                **_supabase_headers(),
+                "Prefer": "return=representation,resolution=ignore-duplicates",
+            },
             json=rows,
             timeout=30,
         )
         if resp.status_code in (200, 201):
-            print(f"[save] 写入 {len(rows)} 条（跳过 {len(items) - len(rows)} 条重复）")
-            return len(rows)
+            inserted = len(resp.json())
+            skipped = len(rows) - inserted
+            print(f"[save] 写入 {inserted} 条（跳过 {skipped} 条重复）")
+            return inserted
 
         err_msg = f"Supabase 写入失败 HTTP {resp.status_code}: {resp.text[:200]}"
         print(f"[save] {err_msg}")
