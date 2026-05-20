@@ -67,14 +67,22 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 **修复后：**
 ```typescript
+// constant-time 字节比较（纯 JS，兼容 Deno Edge Runtime）
+// Web Crypto API 无 timingSafeEqual，使用 diff |= 累加器模式，无任何提前退出分支
 function timingSafeEqual(a: string, b: string): boolean {
   const enc = new TextEncoder()
   const ab = enc.encode(a)
   const bb = enc.encode(b)
-  if (ab.byteLength !== bb.byteLength) return false
-  return crypto.subtle.timingSafeEqual(ab, bb)  // Deno 内置，真正 constant-time
+  const maxLen = Math.max(ab.byteLength, bb.byteLength)
+  let diff = ab.byteLength ^ bb.byteLength  // 长度不等 → diff 非零 → 返回 false
+  for (let i = 0; i < maxLen; i++) {
+    diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0)    // 越界按 0 处理，始终完整遍历
+  }
+  return diff === 0
 }
 ```
+
+> **注：** `crypto.subtle.timingSafeEqual` 为 Node.js 专有 API，不在 Web Crypto 规范内，Deno `SubtleCrypto` 不含此方法（`TS2339` 类型错误）。本方案为纯 JS 实现，无外部依赖，经 5 组断言验证通过。
 
 ---
 

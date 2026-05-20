@@ -1,24 +1,11 @@
 /**
- * 生成并插入 crawler 来源的测试工具数据
+ * 插入 crawler 来源的测试工具数据
  * 运行：npx tsx scripts/seed-crawler-tools.ts
  */
 
 /// <reference types="node" />
-import { readFileSync } from 'node:fs'
-import { request as httpsRequest } from 'node:https'
-import { IncomingMessage } from 'node:http'
+import { loadEnv, httpFetch } from './lib/http'
 
-function loadEnv(file: string) {
-  try {
-    const lines = readFileSync(file, 'utf-8').split('\n')
-    for (const line of lines) {
-      const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
-      if (m && !process.env[m[1]]) {
-        process.env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim()
-      }
-    }
-  } catch { /* 从 shell 环境读取 */ }
-}
 loadEnv('.env.local')
 
 const SUPABASE_URL     = process.env.SUPABASE_URL ?? ''
@@ -27,28 +14,6 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('❌ 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY')
   process.exit(1)
-}
-
-// ── HTTP ──────────────────────────────────────────────────────
-function httpFetch(rawUrl: string, opts: {
-  method?: string; headers?: Record<string, string>; body?: string
-}): Promise<{ status: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    const url = new URL(rawUrl)
-    const req = httpsRequest({
-      hostname: url.hostname, port: url.port || 443,
-      path: url.pathname + url.search,
-      method: opts.method ?? 'GET', headers: opts.headers ?? {},
-    }, (res: IncomingMessage) => {
-      let body = ''
-      res.on('data', (c: Buffer) => { body += c.toString() })
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body }))
-      res.on('error', reject)
-    })
-    req.on('error', reject)
-    if (opts.body) req.write(opts.body)
-    req.end()
-  })
 }
 
 const headers = {
@@ -61,7 +26,7 @@ const headers = {
 // ── 工具数据 ───────────────────────────────────────────────────
 const tools = [
   {
-    slug: 'perplexity-ai',
+    slug: 'perplexity',
     name: 'Perplexity AI',
     name_en: 'Perplexity AI',
     tagline: '带来源引用的 AI 实时问答搜索',
@@ -80,7 +45,7 @@ const tools = [
     views: 0,
   },
   {
-    slug: 'runway-gen3',
+    slug: 'runway',
     name: 'Runway Gen-3 Alpha',
     name_en: 'Runway Gen-3 Alpha',
     tagline: '好莱坞级别的 AI 文生视频',
@@ -156,26 +121,7 @@ const tools = [
     views: 0,
   },
   {
-    slug: 'elevenlabs',
-    name: 'ElevenLabs',
-    name_en: 'ElevenLabs',
-    tagline: '最自然的 AI 语音克隆与多语言配音',
-    description: 'ElevenLabs 提供高保真语音合成和声音克隆，只需 1 分钟样本即可克隆声音。支持 29 种语言，提供情感控制和说话节奏调整，广泛用于有声书、播客、视频配音。',
-    level: 'L3',
-    rating: 5,
-    category: 'audio',
-    tags: ['语音克隆', 'TTS', '多语言', '有声书', '配音'],
-    pricing: 'freemium',
-    price_note: '免费版每月 10,000 字符；Starter $5/月 30,000 字符',
-    website_url: 'https://elevenlabs.io',
-    published_at: '2026-02-18',
-    status: 'approved',
-    source: 'crawler',
-    saves: 0,
-    views: 0,
-  },
-  {
-    slug: 'n8n-workflow',
+    slug: 'n8n',
     name: 'n8n',
     name_en: 'n8n',
     tagline: '可自托管的开源 AI 工作流自动化平台',
@@ -195,35 +141,10 @@ const tools = [
   },
 ]
 
-// ── 生成 SQL ───────────────────────────────────────────────────
-function toSql(t: typeof tools[0]): string {
-  const arr = (v: string[]) => `'{${v.map(s => s.replace(/'/g, "''")).join(',')}}'`
-  const str = (v: string | undefined) => v == null ? 'NULL' : `'${v.replace(/'/g, "''")}'`
-  return `INSERT INTO public.tools
-  (slug, name, name_en, tagline, description, level, rating,
-   category, tags, pricing, price_note, website_url,
-   published_at, status, source, saves, views)
-VALUES
-  (${str(t.slug)}, ${str(t.name)}, ${str(t.name_en)}, ${str(t.tagline)}, ${str(t.description)},
-   ${str(t.level)}, ${t.rating}, ${str(t.category)}, ${arr(t.tags)},
-   ${str(t.pricing)}, ${str(t.price_note)}, ${str(t.website_url)},
-   '${t.published_at}', 'approved', 'crawler', 0, 0)
-ON CONFLICT (slug) DO NOTHING;`
-}
-
 // ── 执行插入 ───────────────────────────────────────────────────
 async function main() {
   console.log('='.repeat(64))
-  console.log('生成 SQL（共 %d 条）', tools.length)
-  console.log('='.repeat(64))
-
-  for (const t of tools) {
-    console.log('\n-- ' + t.name)
-    console.log(toSql(t))
-  }
-
-  console.log('\n' + '='.repeat(64))
-  console.log('开始执行插入...')
+  console.log('开始插入（共 %d 条）...', tools.length)
   console.log('='.repeat(64))
 
   let ok = 0, skip = 0, fail = 0
@@ -232,11 +153,7 @@ async function main() {
     try {
       const { status, body } = await httpFetch(
         `${SUPABASE_URL}/rest/v1/tools`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(t),
-        }
+        { method: 'POST', headers, body: JSON.stringify(t), timeoutMs: 15_000 }
       )
 
       if (status === 201) {
