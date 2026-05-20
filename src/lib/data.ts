@@ -423,7 +423,7 @@ export const collections: Collection[] = [
     slug: "audio-music",
     title: "音频 / 音乐生成最佳组合",
     desc: "TTS + 歌曲 + 配音，做播客 / 视频 / 课程",
-    toolSlugs: ["elevenlabs", "11labs-music"],
+    toolSlugs: ["elevenlabs", "suno"],
     emoji: "🎵",
     cover: "from-fuchsia-100 to-pink-50",
     tag: "音频",
@@ -459,7 +459,7 @@ export type Launch = {
 export const recentLaunches: Launch[] = [
   { date: "2026-05-06", toolSlug: "fellou",        highlight: "国产 AI 浏览器" },
   { date: "2026-05-04", toolSlug: "manus",         highlight: "通用 Agent" },
-  { date: "2026-05-02", toolSlug: "11labs-music" },
+  { date: "2026-05-02", toolSlug: "suno" },
   { date: "2026-04-30", toolSlug: "qwen" },
   { date: "2026-04-28", toolSlug: "tldraw" },
   { date: "2026-04-25", toolSlug: "lovable",       highlight: "全栈生成" },
