@@ -78,6 +78,9 @@ FEISHU_ALERT_WEBHOOK=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
 | TC-DEDUP1 ~ DEDUP2 | 去重测试 | 重复运行不重复写入 / 批次内去重 | P0 | SQL + 二次触发 |
 | TC-ALERT1 ~ ALERT2 | 失败告警 | 飞书通知触发 / 内容可读 | P0 | 人工模拟失败场景 |
 | TC-CRON1 | 定时执行 | cron 自动触发记录 | P1 | 次日查看 Actions 记录 |
+| TC-UA1 ~ UA2 | UA 轮换 | 每次请求从池中选 UA / 多次请求不固定 | P0 | pytest mock |
+| TC-RATE1 ~ RATE2 | 1s 限速 | 间隔不足 1s 时补 sleep / 超过不 sleep | P0 | pytest mock |
+| TC-ALERT1 ~ ALERT2 | 飞书告警 | 三次全败触发一次告警 / Webhook payload 格式 | P0 | pytest mock |
 
 ---
 
@@ -453,7 +456,7 @@ WHERE source = 'crawler:yc'
 ```
 执行顺序：
   Step 1  检查工作流文件（TC-WF1 ~ WF3）          ← 文件审查
-  Step 2  本地 pytest 单元测试（TC-UNIT1 ~ UNIT5）  ← 函数级验证
+  Step 2  本地 pytest 单元测试（TC-UNIT1~5 + TC-UA1~2 + TC-RATE1~2 + TC-ALERT1~2）  ← 函数级验证
   Step 3  GitHub Actions 手动触发（TC-WF3 触发入口）
   Step 4  工作流完成后检查 Supabase（TC-INT1 ~ INT4）
   Step 5  二次触发验证去重（TC-DEDUP1 ~ DEDUP2）
@@ -474,12 +477,18 @@ WHERE source = 'crawler:yc'
   [ ] TC-WF2: cron 表达式为 "0 2 * * *"（每日 UTC 02:00）
   [ ] TC-WF3: workflow_dispatch 手动触发可用（能看到 Run workflow 按钮）
 
-函数单元测试（本地 pytest）
+函数单元测试（本地 pytest，运行 python -m pytest scripts/crawler/test_yc.py -v -k "not yc_api"）
   [ ] TC-UNIT1: _fetch_page(1) 返回含 companies 列表和 totalPages 的字典
   [ ] TC-UNIT2: _fetch_page() 网络失败时精确重试 3 次后返回 None
   [ ] TC-UNIT3: _format_company() 正确映射 name/tagline/website_url/source_url/batch
   [ ] TC-UNIT4: _format_company() 对空 name 或空 url 返回 None
   [ ] TC-UNIT5: clean_item() 去首尾空格、压缩连续空格、补全 https://
+  [ ] TC-UA1:   每次请求通过 random.choice(USER_AGENTS) 选 UA，值在池内
+  [ ] TC-UA2:   连续 20 次请求出现 ≥ 2 种不同 UA
+  [ ] TC-RATE1: 距上次请求 < 1s 时 sleep 补足间隔（≈ 1.0 - elapsed）
+  [ ] TC-RATE2: 距上次请求 ≥ 1s 时不触发限速 sleep
+  [ ] TC-ALERT1: 三次全败后 _send_alert 恰好调用 1 次，消息含失败 URL
+  [ ] TC-ALERT2: FEISHU_WEBHOOK 已配置时 POST payload 含 [crawler] 前缀和原始消息
 
 集成测试（手动触发 GitHub Actions）
   [ ] TC-INT1: 工作流手动触发成功，日志含"[yc] 完成：写入 N 条"，无 Traceback
@@ -507,7 +516,167 @@ T6 后台联动
 
 ---
 
-## 十三、常见失败排查
+## 十三、四大机制验证标准（TC-UA / TC-RATE / TC-RETRY / TC-ALERT）
+
+> **执行方式：** 本地 `python -m pytest scripts/crawler/test_yc.py -v -k "ua or rate or alert or retry"` 自动验证；手动验证步骤见下方。
+
+---
+
+### TC-UA1：每次请求 UA 来自 USER_AGENTS 池（pytest 自动）
+
+**验证逻辑：** spy `random.choice`，断言调用时传入的序列是 `_common.USER_AGENTS`，且发出的请求头 `User-Agent` 与选出值一致。
+
+**验收标准：** `random.choice` 恰好调用 1 次，选出值在 `USER_AGENTS` 列表内，HTTP 请求头中 `User-Agent` 与之匹配。
+
+**手动验证步骤：**
+
+1. 在 `_do_fetch` 函数内临时添加一行 `print(f"[UA] {headers['User-Agent'][:30]}")`
+2. 运行 `python scripts/crawler/yc.py`（本地需配置 `.env.local`）
+3. 观察前 5 行输出，确认 UA 字符串均为 USER_AGENTS 中的值
+4. 验证完成后删除 print 行
+
+---
+
+### TC-UA2：连续请求 UA 不固定（pytest 自动）
+
+**验证逻辑：** 发起 20 次请求，断言出现 >1 种不同 UA，且全部在池内。
+
+**验收标准：** 20 次请求中出现 ≥ 2 种 User-Agent（统计概率极高，理论最坏情况 P=4^-19 约等于 0）。
+
+**手动验证步骤：**
+
+1. 同 TC-UA1，保留 print 观察 10 次输出
+2. 确认不是每次都打印同一个 UA 字符串
+
+---
+
+### TC-RATE1：请求间隔不足 1s 时补足 sleep（pytest 自动）
+
+**验证逻辑：** 将 `_last_request_time` 设为 `t-0.4`，mock `time.time` 返回 `t`，断言 `time.sleep` 被调用且参数 ≈ 0.6。
+
+**验收标准：** `sleep` 第一次调用参数 ∈ [0.55, 0.65]（误差 ±0.05）。
+
+**手动验证步骤：**
+
+1. 在 `_do_fetch` 内 sleep 调用前后分别打印时间戳
+2. 对 YC API 连续请求 3 页，观察每页之间的耗时
+3. 每两页之间耗时应 ≥ 1.0s（可能更长，因为 API 响应本身也耗时）
+
+---
+
+### TC-RATE2：间隔已超 1s 时不触发限速 sleep（pytest 自动）
+
+**验证逻辑：** 将 `_last_request_time` 设为 `t-1.5`，断言 `sleep` 未被调用。
+
+**验收标准：** `sleep_calls` 列表为空。
+
+---
+
+### TC-RETRY1：三次全败精确重试 3 次（pytest 自动，对应原 TC-UNIT2）
+
+**验收标准：** `call_count == 3`，函数返回 `None`，不抛未捕获异常。
+
+**手动验证步骤：**
+
+1. 临时将 `_API_BASE` 改为 `https://invalid.example.com/`
+2. 运行 `python scripts/crawler/yc.py`
+3. 观察日志，应出现以下三行：
+   ```
+   [fetch] 第1次异常: ...
+   [fetch] 第2次异常: ...
+   [fetch] 第3次异常: ...
+   ```
+4. 之后出现 `[ALERT] fetch 三次全部失败: ...`（无飞书时降级为 print）
+5. 恢复 `_API_BASE` 原值
+
+---
+
+### TC-ALERT1：三次全败后飞书告警恰好触发一次（pytest 自动）
+
+**验证逻辑：** mock `_send_alert`，断言在 3 次全失败后被调用 1 次，且消息含失败 URL。
+
+**验收标准：** `alert_msgs` 长度 == 1，消息包含目标 URL。
+
+**手动验证步骤（需真实飞书 Webhook）：**
+
+1. 确认 `.env.local` 中 `FEISHU_ALERT_WEBHOOK` 已配置
+2. 将 `SUPABASE_SERVICE_ROLE_KEY` 改为 `invalid-key`
+3. 运行 `python scripts/crawler/yc.py`（会写入失败）
+4. 验收：飞书机器人群 **60s 内** 收到消息，消息含 `[crawler]` 前缀
+5. 恢复 `SUPABASE_SERVICE_ROLE_KEY` 正确值
+
+---
+
+### TC-ALERT2：Webhook POST payload 格式正确（pytest 自动）
+
+**验证逻辑：** mock `requests.post`，断言：
+- URL = `FEISHU_WEBHOOK` 值
+- `json.msg_type == "text"`
+- `json.content.text` 含 `[crawler]` 前缀和原始告警内容
+
+**验收标准：** 所有三项断言通过。
+
+**手动验证步骤（飞书真实消息）：**
+
+1. 触发任意告警后，在飞书机器人群查看消息
+2. 消息格式应为：`[crawler] <具体错误信息>`，不是原始 Python traceback
+3. 内容应让值班人员能立即判断：是哪个环节（fetch/save）、错误类型（HTTP 状态码/异常）
+
+---
+
+## 十四、触发验证标准
+
+### workflow_dispatch 手动触发验证
+
+**触发步骤：**
+
+1. GitHub → 仓库主页 → Actions 标签页
+2. 左侧列表选择"crawler"工作流
+3. 右侧点击"Run workflow" → 选择分支（`feature/moxie-4-new` 或 `main`）→ 点击绿色"Run workflow"按钮
+
+**验收标准（按顺序检查）：**
+
+| 检查点 | 预期结果 | 检查位置 |
+|--------|---------|---------|
+| 触发后 30s 内 | Actions 页出现新的运行记录，状态为"In progress"（黄色圆圈） | Actions → crawler |
+| 运行期间日志 | 能看到`[yc] 共 N 页` 和分页进度日志 | Actions → crawler → 点击运行记录 → yc job → 运行 YC 爬虫 step |
+| 运行完成 | 所有 step 显示绿色勾，总耗时 < 30 分钟 | Actions → crawler |
+| 日志末行 | `[yc] 完成：写入 N 条 / 共解析 M 条`，N ≥ 50（首次运行） | yc job 最后几行 |
+| 无异常 | 日志中无 `Traceback`、`Error`、`Exception` 字样 | yc job 全文搜索 |
+
+**触发失败排查：**
+
+- "Run workflow"按钮不可见 → 检查工作流文件是否已合并到默认分支，或检查 Actions 是否被仓库禁用
+- 工作流排队超过 5 分钟 → GitHub Actions 队列拥塞，等待即可
+- step 报红 → 点击具体 step 查看 error message，参考"常见失败排查"表
+
+---
+
+### cron 自动触发验证（TC-CRON1，次日）
+
+**cron 时间：** `0 2 * * *` = **每天 UTC 02:00**（北京时间 10:00）
+
+**验收步骤（在 UTC 02:10 之后执行）：**
+
+1. GitHub → Actions → crawler → 查看执行历史列表
+2. 找到触发来源标注为"Schedule"（非"Run workflow"）的记录
+3. 点击记录查看详情
+
+**验收标准：**
+
+| 检查项 | 预期值 |
+|--------|--------|
+| 触发来源 | "Schedule"（非手动） |
+| 触发时间 | UTC 02:00 ± 15 分钟（GitHub 调度有延迟） |
+| 运行状态 | 成功（绿色） |
+| 写入数量 | N ≥ 0（二次运行因去重，新增数量可能为 0） |
+| 去重日志 | 出现 `[save] 全部 N 条已存在，跳过` 或 `[save] 写入 X 条（跳过 Y 条重复）` |
+
+> **注意：** GitHub cron 在仓库 Actions 被 60 天以上不活跃时会自动暂停。每次有推送活动后自动恢复。TC-CRON1 不阻塞 T4 验收关闭，首次 cron 自动触发后补充结果。
+
+---
+
+## 十五、常见失败排查
 
 | 失败场景 | 可能原因 | 排查位置 |
 |---------|---------|---------|
