@@ -167,16 +167,21 @@ def _existing_source_urls(source: str) -> set[str]:
     return existing
 
 
+SAVE_BATCH_SIZE: int = 500  # 单次 POST 最大条数，可按需调整
+
+
 def save_to_supabase(
     items: list[dict],
     source: str = "crawler:yc",
     existing_urls: Optional[set[str]] = None,
+    batch_size: int = SAVE_BATCH_SIZE,
 ) -> int:
     """
-    批量写入 submissions 表。
+    批量写入 submissions 表，超过 batch_size 时分批发送。
     existing_urls: 调用方预先查好的已有 source_url 集合；
                    传入时跳过数据库查询并在写入后自动更新该 set，
                    实现跨页去重；不传则按旧行为每次查库。
+    batch_size:    单次 POST 最大条数（默认 SAVE_BATCH_SIZE=500）。
     返回实际写入条数。
     """
     if not items:
@@ -194,26 +199,29 @@ def save_to_supabase(
         return 0
 
     rows = [{"payload": item, "source": source, "status": "pending"} for item in to_insert]
+    url = f"{SUPABASE_URL}/rest/v1/submissions"
+    headers = {**_supabase_headers(), "Prefer": "return=minimal,resolution=ignore-duplicates"}
 
-    try:
-        resp = requests.post(
-            f"{SUPABASE_URL}/rest/v1/submissions",
-            headers={**_supabase_headers(), "Prefer": "return=minimal,resolution=ignore-duplicates"},
-            json=rows,
-            timeout=30,
-        )
-        if resp.status_code in (200, 201, 204):
-            skipped = len(items) - len(rows)
-            print(f"[save] 写入 {len(rows)} 条（跳过 {skipped} 条重复）")
-            if existing_urls is not None:
-                existing_urls.update(it["source_url"] for it in to_insert if it.get("source_url"))
-            return len(rows)
+    total_inserted = 0
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i : i + batch_size]
+        try:
+            resp = requests.post(url, headers=headers, json=batch, timeout=30)
+            if resp.status_code in (200, 201, 204):
+                total_inserted += len(batch)
+                if existing_urls is not None:
+                    existing_urls.update(
+                        item["payload"]["source_url"]
+                        for item in batch
+                        if item["payload"].get("source_url")
+                    )
+            else:
+                err_msg = f"Supabase 写入失败 HTTP {resp.status_code}: {resp.text[:200]}"
+                print(f"[save] {err_msg}")
+                _send_alert(err_msg)
+        except Exception as e:
+            _send_alert(f"Supabase 写入异常: {e}")
 
-        err_msg = f"Supabase 写入失败 HTTP {resp.status_code}: {resp.text[:200]}"
-        print(f"[save] {err_msg}")
-        _send_alert(err_msg)
-        return 0
-
-    except Exception as e:
-        _send_alert(f"Supabase 写入异常: {e}")
-        return 0
+    skipped = len(items) - len(rows)
+    print(f"[save] 写入 {total_inserted} 条（跳过已存在 {skipped} 条，共 {len(rows)} 条待写入）")
+    return total_inserted

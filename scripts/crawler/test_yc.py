@@ -1,8 +1,11 @@
 """
 T4 YC 爬虫单元测试
 覆盖: TC-UNIT1 ~ TC-UNIT5, TC-UA1 ~ UA2, TC-RATE1 ~ RATE2, TC-ALERT1 ~ ALERT2
+      TC-RUNTIME: yc.main() 首页失败抛 RuntimeError
+      TC-BATCH: save_to_supabase 分批写入行为
 运行: python -m pytest scripts/crawler/test_yc.py -v
 """
+import pytest
 import sys
 import os
 from pathlib import Path
@@ -346,3 +349,124 @@ def test_feishu_webhook_post_correct_payload(monkeypatch):
     text = payload.get("content", {}).get("text", "")
     assert "[crawler]" in text, f"消息应含 [crawler] 前缀: {text}"
     assert "Supabase 写入失败" in text, f"消息应含原始告警内容: {text}"
+
+
+# ─────────────────────────────────────────────────────────────
+# TC-RUNTIME: yc.main() 首页失败抛 RuntimeError（不调用 sys.exit）
+# ─────────────────────────────────────────────────────────────
+def test_yc_main_raises_runtime_error_on_first_page_failure(monkeypatch):
+    """TC-RUNTIME: fetch_json 返回 None 时 main() 抛 RuntimeError，不调用 sys.exit"""
+    import yc
+
+    # yc.py 已以 from _common import fetch_json 导入为本地绑定，
+    # 必须 patch yc 模块内的名称，而非 _common 内的原始定义
+    monkeypatch.setattr(yc, "fetch_json", lambda *a, **k: None)
+
+    with pytest.raises(RuntimeError, match="第一页"):
+        yc.main(dry_run=True)
+
+
+def test_yc_main_does_not_call_sys_exit_on_failure(monkeypatch):
+    """TC-RUNTIME2: 首页失败时进程不会被 sys.exit 终止（异常可被上层捕获）"""
+    import yc
+
+    monkeypatch.setattr(yc, "fetch_json", lambda *a, **k: None)
+
+    caught = False
+    try:
+        yc.main(dry_run=True)
+    except RuntimeError:
+        caught = True
+    except SystemExit:
+        pytest.fail("不应调用 sys.exit，应抛 RuntimeError")
+
+    assert caught, "期望捕获到 RuntimeError"
+
+
+# ─────────────────────────────────────────────────────────────
+# TC-BATCH: save_to_supabase 分批写入行为
+# ─────────────────────────────────────────────────────────────
+def _make_items(n: int) -> list[dict]:
+    return [{"source_url": f"https://yc.com/c/{i}", "name": f"Co{i}"} for i in range(n)]
+
+
+def test_save_batch_splits_into_multiple_posts(monkeypatch):
+    """TC-BATCH1: 超过 batch_size 时拆分为多次 POST"""
+    import requests
+    import _common
+
+    post_calls = []
+
+    def mock_post(url, headers=None, json=None, timeout=None):
+        post_calls.append(len(json))
+        return MagicMock(status_code=201)
+
+    monkeypatch.setattr(requests, "post", mock_post)
+    monkeypatch.setattr(_common, "SUPABASE_URL", "https://fake.supabase.co")
+    monkeypatch.setattr(os, "environ", {**os.environ, "SUPABASE_SERVICE_ROLE_KEY": "fake-key"})
+
+    items = _make_items(7)
+    # 传入空 existing_urls，跳过 _existing_source_urls 的真实 DB 查询
+    result = _common.save_to_supabase(
+        items, source="crawler:test", existing_urls=set(), batch_size=3
+    )
+
+    assert len(post_calls) == 3, f"7 条 / batch=3 应发 3 次 POST，实际 {len(post_calls)} 次"
+    assert post_calls == [3, 3, 1], f"各批大小应为 [3,3,1]，实际 {post_calls}"
+    assert result == 7, f"全部成功时应返回 7，实际 {result}"
+
+
+def test_save_batch_partial_failure_returns_partial_count(monkeypatch):
+    """TC-BATCH2: 某批 POST 失败时，仅统计成功批次的条数"""
+    import requests
+    import _common
+
+    call_index = [0]
+
+    def mock_post(url, headers=None, json=None, timeout=None):
+        idx = call_index[0]
+        call_index[0] += 1
+        if idx == 1:  # 第 2 批失败
+            return MagicMock(status_code=500, text="Internal Server Error")
+        return MagicMock(status_code=201)
+
+    alert_msgs = []
+    monkeypatch.setattr(requests, "post", mock_post)
+    monkeypatch.setattr(_common, "SUPABASE_URL", "https://fake.supabase.co")
+    monkeypatch.setattr(_common, "_send_alert", lambda msg: alert_msgs.append(msg))
+    monkeypatch.setattr(os, "environ", {**os.environ, "SUPABASE_SERVICE_ROLE_KEY": "fake-key"})
+
+    items = _make_items(6)
+    # 传入空 existing_urls，跳过 _existing_source_urls 的真实 DB 查询
+    result = _common.save_to_supabase(
+        items, source="crawler:test", existing_urls=set(), batch_size=2
+    )
+
+    assert result == 4, f"第 1/3 批成功（各 2 条），应返回 4，实际 {result}"
+    assert len(alert_msgs) == 1, f"第 2 批失败应触发 1 次告警，实际 {len(alert_msgs)} 次"
+    assert "500" in alert_msgs[0], f"告警应含 HTTP 500: {alert_msgs[0]}"
+
+
+def test_save_batch_default_batch_size_is_500(monkeypatch):
+    """TC-BATCH3: 默认 batch_size=SAVE_BATCH_SIZE=500，≤500 条只发 1 次 POST"""
+    import requests
+    import _common
+
+    post_calls = []
+
+    def mock_post(url, headers=None, json=None, timeout=None):
+        post_calls.append(len(json))
+        return MagicMock(status_code=201)
+
+    monkeypatch.setattr(requests, "post", mock_post)
+    monkeypatch.setattr(_common, "SUPABASE_URL", "https://fake.supabase.co")
+    monkeypatch.setattr(os, "environ", {**os.environ, "SUPABASE_SERVICE_ROLE_KEY": "fake-key"})
+
+    assert _common.SAVE_BATCH_SIZE == 500, f"默认批次应为 500，实际 {_common.SAVE_BATCH_SIZE}"
+
+    items = _make_items(500)
+    # 传入空 existing_urls，跳过 _existing_source_urls 的真实 DB 查询
+    _common.save_to_supabase(items, source="crawler:test", existing_urls=set())
+
+    assert len(post_calls) == 1, f"500 条恰好等于 batch_size，应发 1 次 POST，实际 {len(post_calls)} 次"
+    assert post_calls[0] == 500
