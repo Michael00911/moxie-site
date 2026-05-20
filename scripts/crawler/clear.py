@@ -34,10 +34,11 @@ def clear(source: str) -> int:
         print("[clear] 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY")
         sys.exit(1)
 
-    # 先查数量
+    # 先查精确总数（Prefer: count=exact 避免 Supabase 默认 1000 行上限）
     r = requests.get(
         f"{SUPABASE_URL}/rest/v1/submissions",
-        headers=_supabase_headers(),
+        headers={**_supabase_headers(), "Prefer": "count=exact",
+                 "Range-Unit": "items", "Range": "0-0"},
         params={"select": "id", "source": f"eq.{source}"},
         timeout=15,
     )
@@ -45,7 +46,8 @@ def clear(source: str) -> int:
         print(f"[clear] 查询失败 HTTP {r.status_code}: {r.text[:100]}")
         sys.exit(1)
 
-    count = len(r.json())
+    content_range = r.headers.get("Content-Range", "0/0")
+    count = int(content_range.split("/")[-1]) if "/" in content_range else 0
     if count == 0:
         print(f"[clear] source={source} 无数据，无需清除")
         return 0

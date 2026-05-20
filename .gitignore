@@ -32,6 +32,8 @@ __pycache__/
 !/docs/test-plan/T1-*.md
 !/docs/test-plan/T2-*.md
 !/docs/test-plan/T3-*.md
+!/docs/test-plan/T4-*.md
+!/docs/test-result/T4-*.md
 
 # next.js
 /.next/
