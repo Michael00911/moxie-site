@@ -231,6 +231,19 @@ async function runDB() {
       (data ?? []).every((r: Record<string, unknown>) => r.action_timing === 'AFTER' && r.action_orientation === 'STATEMENT')
     record('TC-DB4', !!ok, `submissions 触发器事件: ${events.join('/')}（期望 DELETE/INSERT/UPDATE）`, error ?? undefined) ? g.reset() : g.fail()
   }
+
+  // TC-DB5: tools 表也绑定了相同触发器
+  if (g.shouldSkip()) { skip('TC-DB5', '连续失败次数过多'); return }
+  {
+    const { data, error } = await sqlQuery(
+      `SELECT event_manipulation, action_timing, action_orientation FROM information_schema.triggers
+       WHERE event_object_schema='public' AND event_object_table='tools' AND trigger_name='trg_edgeone_deploy'`
+    )
+    const events = (data ?? []).map((r: Record<string, unknown>) => r.event_manipulation as string).sort()
+    const ok = !error && events.join(',') === 'DELETE,INSERT,UPDATE' &&
+      (data ?? []).every((r: Record<string, unknown>) => r.action_timing === 'AFTER' && r.action_orientation === 'STATEMENT')
+    record('TC-DB5', !!ok, `tools 触发器事件: ${events.join('/')}（期望 DELETE/INSERT/UPDATE，FOR EACH STATEMENT）`, error ?? undefined) ? g.reset() : g.fail()
+  }
 }
 
 // ── TC-SEC ─────────────────────────────────────────────────────────
@@ -335,9 +348,42 @@ async function runTH() {
 // ── TC-E2E ─────────────────────────────────────────────────────────
 
 async function runE2E() {
-  log('\n[TC-E2E] 端到端测试（EdgeOne 构建需手动验证）')
-  const note = '需在 EdgeOne 控制台确认构建，DB 触发链路已由 TC-TH 覆盖'
-  skip('TC-E2E1', note); skip('TC-E2E2', note); skip('TC-E2E3', note)
+  log('\n[TC-E2E] 端到端测试')
+  const manualNote = '需在 EdgeOne 控制台确认构建，DB 触发链路已由 TC-TH 覆盖'
+  skip('TC-E2E1', manualNote)
+  skip('TC-E2E2', manualNote)
+  skip('TC-E2E3', manualNote)
+
+  // TC-E2E4: UPDATE tools → 触发链路生效（通过 deploy_throttle 侧效验证）
+  {
+    const g = makeGuard()
+    if (g.shouldSkip()) { skip('TC-E2E4', '连续失败次数过多') }
+    else {
+      if (!await resetThrottle(120)) { skip('TC-E2E4', '节流时间重置失败') }
+      else {
+        const tBefore = await getThrottleTime()
+
+        // UPDATE tools SET name = name（零副作用，但触发 AFTER UPDATE STATEMENT 触发器）
+        const { error: updErr } = await restPatch(
+          'tools', "slug=eq.claude-code",
+          { updated_at: new Date().toISOString() }
+        )
+        if (updErr) {
+          record('TC-E2E4', false, 'UPDATE tools WHERE slug=claude-code 执行失败', updErr)
+        } else {
+          log(`  ⏳ TC-E2E4: 等待 ${WAIT_MS / 1000}s（pg_net 异步）...`)
+          await sleep(WAIT_MS)
+
+          const tAfter = await getThrottleTime()
+          const updated = tBefore && tAfter && tAfter > tBefore
+          record('TC-E2E4', !!updated,
+            `UPDATE tools 触发链路生效（deploy_throttle: ${tBefore?.toISOString().slice(11,19)} → ${tAfter?.toISOString().slice(11,19)}）`,
+            !updated ? 'deploy_throttle 未更新，Edge Function 可能未被调用' : undefined
+          )
+        }
+      }
+    }
+  }
 }
 
 // ── TC-ERR ─────────────────────────────────────────────────────────
@@ -441,6 +487,7 @@ function buildMarkdown(elapsed: string): string {
     { label: 'TC-E2E 端到端',    prefix: 'TC-E2E' },
     { label: 'TC-ERR 异常容错',  prefix: 'TC-ERR' },
   ]
+  // 动态状态：有失败=❌，全跳过=⏭️，否则=✅
   const tableRows = groups.map(g => {
     const grp = results.filter(r => r.id.startsWith(g.prefix))
     const p = grp.filter(r => r.status === 'pass').length
@@ -493,7 +540,7 @@ ${testLogs.join('\n')}
 
 | 用例 | 原因 |
 |------|------|
-| TC-E2E1~3 | EdgeOne 构建过程需在控制台手动确认，DB 触发链路已由 TC-TH 覆盖 |
+| TC-E2E1~3 | EdgeOne 构建过程需在控制台手动确认，DB 触发链路已由 TC-TH / TC-E2E4 覆盖 |
 | TC-ERR2 | 需临时修改 Edge Function 环境变量 EDGEONE_DEPLOY_HOOK_URL，不可远程自动化 |
 
 ---
